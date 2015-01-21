@@ -1,4 +1,8 @@
-include ../Makefile.inc
+#include ../Makefile.inc
+
+# XX
+inc_dir = /usr/local/include
+lib_dir = /usr/local/lib
 
 FLAGS_C = -std=c99 -fPIC -lm -lpthread 
 #FLAGS_SHARED = -fPIC -shared
