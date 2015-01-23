@@ -253,7 +253,7 @@ bool f_socket_write(int client_socket, ssize_t *num_written, const char *buf, si
 bool f_socket_close(int client_socket);
 
 bool socket_unix_message(const char *filename, const char *msg);
-bool socket_unix_message_f(const char *filename, const char *msg, char **response, int buf_length);
+bool socket_unix_message_f(const char *filename, const char *msg, char *response, int buf_length);
 
 char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
 void _();

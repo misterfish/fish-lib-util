@@ -1011,7 +1011,7 @@ bool f_socket_close(int client_socket) {
  * buf_length applies to both msg and response.
  */
 //bool socket_unix_message_f(const char *filename, const char *msg, char **response, int buf_length, int flags) {
-bool socket_unix_message_f(const char *filename, const char *msg, char **response, int buf_length) {
+bool socket_unix_message_f(const char *filename, const char *msg, char *response, int buf_length) {
     struct sockaddr_un serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
 
@@ -1068,7 +1068,7 @@ bool socket_unix_message_f(const char *filename, const char *msg, char **respons
         if (*c == '\n') {
             break;
         }
-        if (!trash_response) strncat(*response, c, 1);
+        if (!trash_response) strncat(response, c, 1);
     }
     close(sockfd);
 
