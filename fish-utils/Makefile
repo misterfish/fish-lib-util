@@ -1,11 +1,14 @@
-include ../Makefile.inc
+# necessary on pi? XX
+inc_dir = /usr/local/include
+lib_dir = /usr/local/lib ../fish-util
 
-# fish-util objects not necessary -- to make fish-utils.o we don't need them
-# and to make libfish-utils.so we use libfish-util.so.
+# Not necessary to make fish-util objects available to the outside -- to
+# make fish-utils.o we don't need them and to make libfish-utils.so we use
+
 fish_util_dir = ../fish-util
 
 FLAGS_C = -std=c99 -lm -lpthread -lpcre -fPIC -I$(inc_dir) -I$(fish_util_dir)
-FLAGS_SHARED = -shared -L$(lib_dir) -lfish-util
+FLAGS_SHARED = -shared -L"$(lib_dir)" -lfish-util
 
 main = fish-utils.c
 deps = $(main) fish-utils/vec.o fish-utils/regex.o
