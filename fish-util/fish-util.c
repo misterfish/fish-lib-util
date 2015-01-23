@@ -62,11 +62,11 @@
 /* Private headers.
  */
 
-static char** _get_static_str_ptr();
-static char* _color(const char* s, int idx);
+static char **_get_static_str_ptr();
+static char *_color(const char *s, int idx);
 static void _static_str_init();
-static void _color_static(const char* c);
-static void _sys_say(const char* cmd);
+static void _color_static(const char *c);
+static void _sys_say(const char *cmd);
 static void _static_strings_free();
 
 /* Public.
@@ -77,10 +77,10 @@ char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
 /* Private.
  */
 
-static char* warn_prefix;
+static char *warn_prefix;
 static int warn_prefix_size = 0;
 
-static const char* BULLET = "ঈ";
+static const char *BULLET = "ঈ";
 static const int BULLET_LENGTH = 3; // in utf-8 at least XX
 
 static struct stat *mystat;
@@ -91,7 +91,7 @@ static bool _static_str_initted = false;
 static char **_static_strs[NUM_STATIC_STRINGS];
 static bool _static_strings_freed = false;
 
-static char* COL[] = {
+static char *COL[] = {
     // reset
     "[0m",
     // red
@@ -148,16 +148,16 @@ static bool _verbose = true;
 
 /* Caller shouldn't free.
  */
-FILE *safeopen_f(char* filespec, int flags) {
+FILE *safeopen_f(char *filespec, int flags) {
     FILE *f = NULL;
 
-    char* filename = NULL;
+    char *filename = NULL;
     bool err = false;
     bool die = ! (flags & F_NODIE);
     bool quiet = flags & F_QUIET;
     bool utf8 = flags & F_UTF8;
     char *mode;
-    char* mode_f = str(3 + 10 + 1); // max mode 3 long, including b, 10 for utf-8
+    char *mode_f = str(3 + 10 + 1); // max mode 3 long, including b, 10 for utf-8
 
     if (flags & F_WRITE) {
         mode = "writing";
@@ -262,7 +262,7 @@ FILE *safeopen_f(char* filespec, int flags) {
     return f;
 }
 
-FILE* safeopen(char* filespec) {
+FILE *safeopen(char *filespec) {
     return safeopen_f(filespec, 0);
 }
 
@@ -315,7 +315,7 @@ void _static_strings_save() {
     _static_strings_save_restore(0);
 }
 
-char* f_get_warn_prefix(char* file, int line) {
+char *f_get_warn_prefix(char *file, int line) {
     _static_strings_save();
 
     if (!warn_prefix_size) {
@@ -343,7 +343,7 @@ char* f_get_warn_prefix(char* file, int line) {
 }
 
 
-bool test_f(const char* file) {
+bool test_f(const char *file) {
     struct stat *s = f_stat_f(file, F_QUIET);
     if (!s) return 0;
     int mode = s->st_mode;
@@ -352,7 +352,7 @@ bool test_f(const char* file) {
     return S_ISREG(mode);
 }
 
-bool test_d(const char* file) {
+bool test_d(const char *file) {
     struct stat *s = f_stat_f(file, F_QUIET);
     if (!s) return 0;
     int mode = s->st_mode;
@@ -363,7 +363,7 @@ bool test_d(const char* file) {
 
 /* Take from the heap, probably slower than normal stat.
  */
-struct stat *f_stat_f(const char* file, int flags) {
+struct stat *f_stat_f(const char *file, int flags) {
     if (!mystat_initted) {
         mystat = malloc(sizeof(*mystat));
         mystat_initted = true;
@@ -383,7 +383,7 @@ struct stat *f_stat_f(const char* file, int flags) {
     return mystat;
 }
 
-struct stat *f_stat(const char* file) {
+struct stat *f_stat(const char *file) {
     return f_stat_f(file, 0);
 }
 
@@ -404,7 +404,7 @@ char *str(int length) {
 
 /* Is null-terminated, even if size too small.
  */
-void spr(const char* format, ...) {
+void spr(const char *format, ...) {
     int size = STATIC_STR_LENGTH; // with \0
     char *s = str(size); // \0
     va_list arglist;
@@ -424,7 +424,7 @@ void spr(const char* format, ...) {
 
 /* Caller should free.
  */
-char* spr_(const char* format, int size /*with null*/, ...) {
+char *spr_(const char *format, int size /*with null*/, ...) {
     char *s = str(size);
     va_list arglist;
     va_start( arglist, size );
@@ -445,111 +445,111 @@ void _() {
     }
 }
 
-char* R_(const char* s) {
+char *R_(const char *s) {
     return _color(s, RED);
 }
-char* BR_(const char* s) {
+char *BR_(const char *s) {
     return _color(s, BRIGHT_RED);
 }
-char* G_(const char* s) {
+char *G_(const char *s) {
     return _color(s, GREEN);
 }
-char* BG_(const char* s) {
+char *BG_(const char *s) {
     return _color(s, BRIGHT_GREEN);
 }
-char* Y_(const char* s) {
+char *Y_(const char *s) {
     return _color(s, YELLOW);
 }
-char* BY_(const char* s) {
+char *BY_(const char *s) {
     return _color(s, BRIGHT_YELLOW);
 }
-char* B_(const char* s) {
+char *B_(const char *s) {
     return _color(s, BLUE);
 }
-char* BB_(const char* s) {
+char *BB_(const char *s) {
     return _color(s, BRIGHT_BLUE);
 }
-char* CY_(const char* s) {
+char *CY_(const char *s) {
     return _color(s, CYAN);
 }
-char* BCY_(const char* s) {
+char *BCY_(const char *s) {
     return _color(s, BRIGHT_CYAN);
 }
-char* M_(const char* s) {
+char *M_(const char *s) {
     return _color(s, MAGENTA);
 }
-char* BM_(const char* s) {
+char *BM_(const char *s) {
     return _color(s, BRIGHT_MAGENTA);
 }
 
-void R(const char* s) {
-    char* c = _color(s, RED);
+void R(const char *s) {
+    char *c = _color(s, RED);
     _color_static(c);
     free(c);
 }
 
-void BR(const char* s) {
-    char* c = _color(s, BRIGHT_RED);
+void BR(const char *s) {
+    char *c = _color(s, BRIGHT_RED);
     _color_static(c);
     free(c);
 }
 
-void G(const char* s) {
-    char* c = _color(s, GREEN);
+void G(const char *s) {
+    char *c = _color(s, GREEN);
     _color_static(c);
     free(c);
 }
 
-void BG(const char* s) {
-    char* c = _color(s, BRIGHT_GREEN);
+void BG(const char *s) {
+    char *c = _color(s, BRIGHT_GREEN);
     _color_static(c);
     free(c);
 }
 
-void Y(const char* s) {
-    char* c = _color(s, YELLOW);
+void Y(const char *s) {
+    char *c = _color(s, YELLOW);
     _color_static(c);
     free(c);
 }
 
-void BY(const char* s) {
-    char* c = _color(s, BRIGHT_YELLOW);
+void BY(const char *s) {
+    char *c = _color(s, BRIGHT_YELLOW);
     _color_static(c);
     free(c);
 }
 
-void B(const char* s) {
-    char* c = _color(s, BLUE);
+void B(const char *s) {
+    char *c = _color(s, BLUE);
     _color_static(c);
     free(c);
 }
 
-void BB(const char* s) {
-    char* c = _color(s, BRIGHT_BLUE);
+void BB(const char *s) {
+    char *c = _color(s, BRIGHT_BLUE);
     _color_static(c);
     free(c);
 }
 
-void CY(const char* s) {
-    char* c = _color(s, CYAN);
+void CY(const char *s) {
+    char *c = _color(s, CYAN);
     _color_static(c);
     free(c);
 }
 
-void BCY(const char* s) {
-    char* c = _color(s, BRIGHT_CYAN);
+void BCY(const char *s) {
+    char *c = _color(s, BRIGHT_CYAN);
     _color_static(c);
     free(c);
 }
 
-void M(const char* s) {
-    char* c = _color(s, MAGENTA);
+void M(const char *s) {
+    char *c = _color(s, MAGENTA);
     _color_static(c);
     free(c);
 }
 
-void BM(const char* s) {
-    char* c = _color(s, BRIGHT_MAGENTA);
+void BM(const char *s) {
+    char *c = _color(s, BRIGHT_MAGENTA);
     _color_static(c);
     free(c);
 }
@@ -559,9 +559,9 @@ void BM(const char* s) {
  * second case, does it need to be freed? XX
  */
 
-const char* perr() {
-    char* st = str(100);
-    char* ret = strerror_r(errno, st, 100);
+const char *perr() {
+    char *st = str(100);
+    char *ret = strerror_r(errno, st, 100);
     if (*st == '\0') { 
         // buffer unused
         free(st);
@@ -574,10 +574,10 @@ const char* perr() {
     }
 }
 
-char* add_nl(const char *orig) {
+char *add_nl(const char *orig) {
     // not including null
     int len = strlen(orig);
-    char* new = malloc(sizeof(char) * (len + 2));
+    char *new = malloc(sizeof(char) * (len + 2));
     memset(new, '\0', len + 2);
     // no null
     strncpy(new, orig, len);
@@ -587,7 +587,7 @@ char* add_nl(const char *orig) {
 }
 
 void say(const char *format, ...) {
-    char* new = add_nl(format);
+    char *new = add_nl(format);
     va_list arglist;
     va_start( arglist, format );
     vprintf( new, arglist );
@@ -596,8 +596,8 @@ void say(const char *format, ...) {
 }
 
 void ask(const char *format, ...) {
-    char* new = str(INFO_LENGTH);
-    char* new2 = str(INFO_LENGTH + 1);
+    char *new = str(INFO_LENGTH);
+    char *new2 = str(INFO_LENGTH + 1);
     va_list arglist, arglist_copy;
     va_start( arglist, format );
     va_copy(arglist_copy, arglist);
@@ -608,8 +608,8 @@ void ask(const char *format, ...) {
     }
     va_end( arglist );
 
-    char* question = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + BULLET_LENGTH + 1 + 1 + 1 + 1);
-    char* c = M_(BULLET);
+    char *question = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + BULLET_LENGTH + 1 + 1 + 1 + 1);
+    char *c = M_(BULLET);
     sprintf(question, "%s %s? ", c, new);
     printf(question);
     free(c);
@@ -620,8 +620,8 @@ void ask(const char *format, ...) {
 }
 
 void info(const char *format, ...) {
-    char* new = str(INFO_LENGTH);
-    char* new2 = str(INFO_LENGTH + 1);
+    char *new = str(INFO_LENGTH);
+    char *new2 = str(INFO_LENGTH + 1);
     va_list arglist;
     va_list arglist_copy;
     va_start( arglist, format );
@@ -633,8 +633,8 @@ void info(const char *format, ...) {
     }
     va_end( arglist );
 
-    char* infos = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + BULLET_LENGTH + 1 + 1 + 1);
-    char* c = BB_(BULLET);
+    char *infos = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + BULLET_LENGTH + 1 + 1 + 1);
+    char *c = BB_(BULLET);
     sprintf(infos, "%s %s\n", c, new);
     printf(infos);
     free(c);
@@ -645,8 +645,8 @@ void info(const char *format, ...) {
 }
 
 void err(const char *format, ...) {
-    char* new = str(ERR_LENGTH);
-    char* new2 = str(ERR_LENGTH + 1); // for checking truncations
+    char *new = str(ERR_LENGTH);
+    char *new2 = str(ERR_LENGTH + 1); // for checking truncations
     va_list arglist, arglist_copy;
     va_start( arglist, format );
     va_copy(arglist_copy, arglist);
@@ -656,8 +656,8 @@ void err(const char *format, ...) {
         warn("Error string truncated.");
     }
     va_end( arglist );
-    char* errors = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + BULLET_LENGTH + 1 + 1 + 1);
-    char* c = R_(BULLET);
+    char *errors = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + BULLET_LENGTH + 1 + 1 + 1);
+    char *c = R_(BULLET);
     sprintf(errors, "%s %s\n", c, new);
     fprintf(stderr, errors);
     free(errors);
@@ -668,23 +668,23 @@ void err(const char *format, ...) {
 }
 
 // used in die() macros.
-void __die(const char* file, int line) {
+void __die(const char *file, int line) {
     // leaks, don't care.
     // check for trunc ??
     err(spr_("Unexpected error (%s:%s)", ERR_LENGTH, file, Y_(spr_("%d", 100, line))));
 }
 
 // used in die() macros.
-void __die_msg(const char* file, int line, const char *msg) {
+void __die_msg(const char *file, int line, const char *msg) {
     // leaks, don't care.
     // check for trunc ??
     err(spr_("Unexpected error (%s:%s) -- %s", ERR_LENGTH, file, Y_(spr_("%d", 100, line)), msg));
 }
 
 
-void warn(const char* format, ...) {
-    char* new = str(WARN_LENGTH);
-    char* new2 = str(WARN_LENGTH + 1);
+void warn(const char *format, ...) {
+    char *new = str(WARN_LENGTH);
+    char *new2 = str(WARN_LENGTH + 1);
     va_list arglist, arglist_copy;
     va_start( arglist, format );
     va_copy(arglist_copy, arglist);
@@ -696,8 +696,8 @@ void warn(const char* format, ...) {
     }
     va_end( arglist );
 
-    char* warning = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + BULLET_LENGTH + 1 + 1 + 1);
-    char* c = BR_(BULLET);
+    char *warning = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + BULLET_LENGTH + 1 + 1 + 1);
+    char *c = BR_(BULLET);
     sprintf(warning, "%s %s\n", c, new);
     fprintf(stderr, warning);
     free(warning);
@@ -716,11 +716,11 @@ void verbose_cmds(bool b) {
 
 /* Non-null FILE means fork or pipe succeeded, but command could still fail
  * (e.g. command not found).
- * Caller should call sysclose.
+ * Caller should check for NULL, and call sysclose.
  */
-FILE *sysr(const char* cmd) {
+FILE *sysr(const char *cmd) {
     if (_verbose) _sys_say(cmd);
-    FILE* f = popen(cmd, "r");
+    FILE *f = popen(cmd, "r");
     if (f == NULL) {
         _();
         BR(cmd);
@@ -734,9 +734,9 @@ FILE *sysr(const char* cmd) {
  * (e.g. command not found).
  * Caller should call sysclose.
  */
-FILE* sysw(const char* cmd) {
+FILE *sysw(const char *cmd) {
     if (_verbose) _sys_say(cmd);
-    FILE* f = popen(cmd, "w");
+    FILE *f = popen(cmd, "w");
     if (f == NULL) {
         _();
         BR(cmd);
@@ -747,7 +747,7 @@ FILE* sysw(const char* cmd) {
 }
 
 // 0 means good.
-int sysclose_f(FILE* f, const char *cmd) {
+int sysclose_f(FILE *f, const char *cmd) {
     int i = pclose(f);
     if (i != 0) {
         // Perr doesn't work here -- if the shell fails it should print
@@ -773,7 +773,7 @@ int sysclose(FILE *f) {
 }
 
 // 0 means good
-int sysxf(const char* orig, ...) {
+int sysxf(const char *orig, ...) {
     char *cmd = str(CMD_LENGTH);
     va_list arglist;
     va_start( arglist, orig );
@@ -786,7 +786,7 @@ int sysxf(const char* orig, ...) {
 }
 
 // 0 means good
-int sysx(const char* cmd) {
+int sysx(const char *cmd) {
     FILE *f = sysr(cmd);
 
     int le = CMD_LENGTH;
@@ -806,7 +806,7 @@ int sysx(const char* cmd) {
  */
 int sys(char *ret, const char *cmd) {
     /*
-    char* buf = str(CMD_LENGTH);
+    char *buf = str(CMD_LENGTH);
     while (fgets(buf, CMD_LENGTH, f) != NULL) {
         printf(buf);
     }
@@ -869,7 +869,7 @@ void f_benchmark(int flag) {
 }
 
 // errno doesn't always work.
-long int stoie(const char* s, int *err) {
+long int stoie(const char *s, int *err) {
     char *endptr;
     long int i = strtol(s, &endptr, 10);
     // nothing converted
@@ -882,7 +882,7 @@ long int stoie(const char* s, int *err) {
     }
 }
 
-long int stoi(const char* s) {
+long int stoi(const char *s) {
     int err = 0;
     int i = stoie(s, &err);
     if (err) {
@@ -955,7 +955,7 @@ bool f_socket_make_client(int socket, int *client_socket) {
     return true;
 }
 
-bool f_socket_read(int client_socket, ssize_t *num_read, char* buf, size_t max_length) {
+bool f_socket_read(int client_socket, ssize_t *num_read, char *buf, size_t max_length) {
     ssize_t rc = recv(client_socket, buf, max_length, 0); // blocking
     if (rc == -1) {
         _();
@@ -1010,8 +1010,8 @@ bool f_socket_close(int client_socket) {
 /* strlen filename, strlen msg.
  * buf_length applies to both msg and response.
  */
-//bool socket_unix_message_f(const char* filename, const char* msg, char **response, int buf_length, int flags) {
-bool socket_unix_message_f(const char* filename, const char* msg, char **response, int buf_length) {
+//bool socket_unix_message_f(const char *filename, const char *msg, char **response, int buf_length, int flags) {
+bool socket_unix_message_f(const char *filename, const char *msg, char **response, int buf_length) {
     struct sockaddr_un serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
 
@@ -1022,7 +1022,7 @@ bool socket_unix_message_f(const char* filename, const char* msg, char **respons
 
     char *filename_color = CY_(filename);
 
-    char* msg_s = str(msg_len + 1 + 1);
+    char *msg_s = str(msg_len + 1 + 1);
     sprintf(msg_s, "%s\n", msg);
 
     if (strlen(msg) >= buf_length) {
@@ -1077,7 +1077,7 @@ bool socket_unix_message_f(const char* filename, const char* msg, char **respons
     return true;
 }
 
-bool socket_unix_message(const char* filename, const char* msg) {
+bool socket_unix_message(const char *filename, const char *msg) {
     return socket_unix_message_f(filename, msg, NULL, SOCKET_LENGTH_DEFAULT + 1);
 }
 
@@ -1099,7 +1099,7 @@ bool yes_no_flags(int deflt, int flags) {
     bool ret = false;
     bool loop = true;
     while (loop) {
-        char* yn = 
+        char *yn = 
             deflt == F_DEFAULT_YES ?  "(Y/n)" : 
             deflt == F_DEFAULT_NO ? "(y/N)" :
             "(y/n)";
@@ -1153,7 +1153,7 @@ bool yes_no() {
  * lucky, the function will stay alive but return null.
  */
 
-char* f_field(int width, char* string, int max_len) {
+char *f_field(int width, char *string, int max_len) {
     // Max len gives some protection, not total.
     int len = strnlen(string, max_len);  // without \0
 
@@ -1166,7 +1166,7 @@ char* f_field(int width, char* string, int max_len) {
         warn("Field length (%d) bigger than desired width (%d)", len, width);
         num_spaces = 0;
     }
-    char* new = str(len+num_spaces + 1); // comes with \0
+    char *new = str(len+num_spaces + 1); // comes with \0
     memset(new, ' ', len+num_spaces);
     memcpy(new, string, len);
     return new;
@@ -1175,8 +1175,8 @@ char* f_field(int width, char* string, int max_len) {
 /* Not space-tolerant.
  * maxlen doesn't include \0, like strlen.
  */
-bool is_int_strn(char* s, int maxlen) {
-    char* t = s;
+bool is_int_strn(char *s, int maxlen) {
+    char *t = s;
     int len = 1;
     if (*t != '+' && *t != '-' && *t != '0' && !isdigit(*t)) 
         return false;
@@ -1203,8 +1203,8 @@ bool is_int_strn(char* s, int maxlen) {
 /* Not space-tolerant.
  * is_int_strn is safer.
  */
-bool is_int_str(char* s) {
-    char* t = s;
+bool is_int_str(char *s) {
+    char *t = s;
     if (*t != '+' && *t != '-' && *t != '0' && !isdigit(*t)) 
         return false;
     while (++t, *t) {
@@ -1237,7 +1237,7 @@ void fish_util_cleanup() {
 
 /* Caller has to assure \0-ok.
  */
-void chop(char* s) {
+void chop(char *s) {
     int i = strlen(s);
     if (i) s[i-1] = '\0';
     else piep;
@@ -1245,23 +1245,23 @@ void chop(char* s) {
 
 /* Caller has to assure \0-ok.
  */
-void chop_w(wchar_t* s) {
+void chop_w(wchar_t *s) {
     int i = wcslen(s);
     if (i) s[i-1] = L'\0';
     else piep;
 }
 
-char* comma(int n) {
+char *comma(int n) {
     int size = int_length(n);
-    char* as_str = str(size + 1);
+    char *as_str = str(size + 1);
     int size2 = size * 2 * sizeof(char); // *2 is more than enough for commas
-    char* ret_r = str(size2 + 1);
+    char *ret_r = str(size2 + 1);
     memset(ret_r, '\0', size2);
     int actual_size = snprintf(as_str, size + 1, "%d", n);
     int i;
     int j = 0;
     int k = -1;
-    char* str_r = reverse(as_str);
+    char *str_r = reverse(as_str);
     for (i = 0; i < actual_size; i++) {
         char c = *(str_r + i);
         k++;
@@ -1275,18 +1275,18 @@ char* comma(int n) {
     }
     free(as_str);
     free(str_r);
-    char* ret = reverse(ret_r);
+    char *ret = reverse(ret_r);
     free(ret_r);
     return ret;
 }
 
-char* reverse(char* s) {
+char *reverse(char *s) {
     int len = strnlen(s, STRNLEN_REVERSE);  // without \0. can still segfault.
     if (len == STRNLEN_REVERSE) {
         warn("reverse(): input too big");
         return NULL;
     }
-    char* r = str(len+1);
+    char *r = str(len+1);
     int i;
     for (i = 0; i < len; i++) {
         *(r+i) = *(s+len-i-1);
@@ -1302,7 +1302,7 @@ int f_get_static_str_length() {
 bool f_set_utf8_f(int flags) {
     int no_warn = flags & F_NOWARN;
     int verbose = flags & F_VERBOSE;
-    char* l = setlocale(LC_ALL, ""); // get from env
+    char *l = setlocale(LC_ALL, ""); // get from env
     if (! l) {  
         if (!no_warn) 
             warn("Couldn't get lang or charset from env variables.");
@@ -1334,12 +1334,12 @@ bool f_set_utf8_f(int flags) {
             return true;
         }
 
-        char* locale = str(12);
+        char *locale = str(12);
 
         sprintf(locale, "%s.UTF-8", lang);
         free(lang);
 
-        char* m = setlocale(LC_ALL, locale);
+        char *m = setlocale(LC_ALL, locale);
         bool ok;
         if (! m) {
             if (!no_warn) 
@@ -1363,11 +1363,11 @@ bool f_set_utf8() {
 }
 
 // caller should free
-wchar_t *d8(char* s) {
+wchar_t *d8(char *s) {
     int len = strlen(s);
-    char* _line = str(len + 1);
+    char *_line = str(len + 1);
     strcpy(_line, s);
-    const char* line = _line; // doesn't need free
+    const char *line = _line; // doesn't need free
     wchar_t *line8 = malloc(sizeof(wchar_t) * (len+1)); // overshoot
     memset(line8, L'\0', sizeof(wchar_t) * (len+1)); // valgrind complains without this, maybe ok though without it
     mbstate_t ps = {0};
@@ -1388,11 +1388,11 @@ wchar_t *d8(char* s) {
 /* Private functions.
  */
 
-static char* _color(const char* s, int idx) {
-    char* t = str(strlen(s) + 1 + 4 + 5);
+static char *_color(const char *s, int idx) {
+    char *t = str(strlen(s) + 1 + 4 + 5);
     bool disable = _disable_colors | ! isatty(fileno(stdout));
-    char* a = disable ? "" : COL[idx];
-    char* b = disable ? "" : COL[0];
+    char *a = disable ? "" : COL[idx];
+    char *b = disable ? "" : COL[0];
     sprintf(t, "%s%s%s", a, s, b );
     return t;
 }
@@ -1413,25 +1413,25 @@ static void _static_str_init() {
 
 }
 
-static void _color_static(const char* c) {
+static void _color_static(const char *c) {
     int l = strlen(c);
     if (l > STATIC_STR_LENGTH - 1) {
         warn("static string truncated (%s)", c);
         l = STATIC_STR_LENGTH - 1;
     }
-    char** ptr = _get_static_str_ptr();
+    char **ptr = _get_static_str_ptr();
     // include null
     memcpy(*ptr, c, l + 1);
 }
 
-static char** _get_static_str_ptr() {
+static char **_get_static_str_ptr() {
     _static_str_idx = (_static_str_idx+1) % NUM_STATIC_STRINGS;
     return _static_strs[_static_str_idx];
 }
 
-static void _sys_say(const char* cmd) {
-    char* new = str(strlen(cmd) + BULLET_LENGTH + COLOR_LENGTH + COLOR_LENGTH_RESET + 2 + 1);
-    char* c = G_(BULLET);
+static void _sys_say(const char *cmd) {
+    char *new = str(strlen(cmd) + BULLET_LENGTH + COLOR_LENGTH + COLOR_LENGTH_RESET + 2 + 1);
+    char *c = G_(BULLET);
     sprintf(new, "%s %s", c, cmd);
     say (new);
     free(new);
@@ -1441,8 +1441,8 @@ static void _sys_say(const char* cmd) {
 static void _static_strings_free() {
     if (!_static_str_initted) return;
     for (int i = 0; i < NUM_STATIC_STRINGS; i++) {
-        char** c = _static_strs[i];
-        char* cc = *c;
+        char **c = _static_strs[i];
+        char *cc = *c;
         free(cc);
     }
 }
