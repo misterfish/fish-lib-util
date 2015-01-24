@@ -1038,7 +1038,7 @@ bool socket_unix_message_f(const char *filename, const char *msg, char *response
     int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     if (sockfd < 0) {
-        warnp("error opening socket %s: %s", filename_color, perr());
+        warnp("Error opening socket %s: %s", filename_color, perr());
         return false;
     }
 
@@ -1046,14 +1046,14 @@ bool socket_unix_message_f(const char *filename, const char *msg, char *response
     strncpy(serv_addr.sun_path, filename, filename_len);
 
     if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof (serv_addr) ) < 0) {
-        warnp("error connecting to socket %s: %s", filename_color, perr());
+        warnp("Error connecting to socket %s: %s", filename_color, perr());
         return false;
     }
 
     int rc = write(sockfd, msg_s, msg_len + 1);
     
     if (rc < 0) {
-        warnp("error writing to socket %s: %s", filename_color, perr());
+        warnp("Error writing to socket %s: %s", filename_color, perr());
         return false;
     }
 
@@ -1062,7 +1062,7 @@ bool socket_unix_message_f(const char *filename, const char *msg, char *response
     for (i = 0; i < buf_length; i++) {
         int rc = read(sockfd, c, 1);
         if (rc < 0) {
-            warnp("error reading from socket %s: %s", filename_color, perr());
+            warnp("Error reading from socket %s: %s", filename_color, perr());
             return false;
         }
         if (*c == '\n') {
