@@ -16,8 +16,8 @@ test: all install test.c
 
 fish-util.o: fish-util.c fish-util.h
 	gcc $(FLAGS_C) fish-util.c -c -o fish-util.o
-	mkdir -p .deps
-	touch .deps/fish-util.o
+	mkdir -p .obj
+	touch .obj/fish-util.o
 
 libfish-util.so: fish-util.c fish-util.h
 	gcc $(FLAGS_SHARED) $(FLAGS_C) fish-util.c -o libfish-util.so
@@ -30,6 +30,6 @@ install:
 	$(ldconfig)
 
 clean: 
-	rm -rf .deps
+	rm -rf .obj
 	rm -f *.o
 	rm -f *.so
