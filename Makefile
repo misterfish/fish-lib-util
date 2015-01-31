@@ -8,7 +8,6 @@ cc = gcc -std=c99 -fPIC
 # sets <module>_obj, <module>_src_dep, <module>_ld, and <module>_all.
 include $(fish_util_dir)/fish-util.mk
 include $(fish_utils_dir)/fish-utils.mk
-
 VPATH=$(fish_util_dir):$(fish_utils_dir)
 
 all: check-init $(fishutil_obj) $(fishutils_obj)
