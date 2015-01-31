@@ -1,35 +1,45 @@
-#include ../Makefile.inc
+install_inc_dir = /usr/local/include
+install_lib_dir = /usr/local/lib
 
-# XX
-inc_dir = /usr/local/include
-lib_dir = /usr/local/lib
+cc = gcc -std=c99 -fPIC
+shared = -shared
 
-FLAGS_C = -std=c99 -fPIC -lm -lpthread 
-#FLAGS_SHARED = -fPIC -shared
-FLAGS_SHARED = -shared
+math_lib = -lm
 
-all: libfish-util.so fish-util.o
+lib = $(math_lib)
+inc =
 
-test: all install test.c
-	gcc $(FLAGS_C) -lfish-util -I$(inc_dir) -L$(lib_dir) test.c -o test
-	./test
+all = $(lib) $(inc)
 
-fish-util.o: fish-util.c fish-util.h
-	gcc $(FLAGS_C) fish-util.c -c -o fish-util.o
-	mkdir -p .obj
-	touch .obj/fish-util.o
+src = fish-util.c fish-util.h
 
-libfish-util.so: fish-util.c fish-util.h
-	gcc $(FLAGS_SHARED) $(FLAGS_C) fish-util.c -o libfish-util.so
+all: .init libfish-util.so fish-util.o
 
-install: 
-	cp fish-util.h $(inc_dir)
-	chmod a+r $(inc_dir)/fish-util.h
-	cp libfish-util.so $(lib_dir)
-	chmod a+r $(lib_dir)/libfish-util.so
+.init: $(src) 
+	@ # src_dep (.c and .h files) so people including us know when to remake us.
+	@ # ld so people including us link what we need (e.g. -lm)
+	mkdir -p .obj/fish-util.o
+	echo > .obj/fish-util.o/src_dep $(src) 
+	echo > .obj/fish-util.o/ld $(lib)
+	touch .init
+
+fish-util.o: $(src) 
+	$(cc) fish-util.c -c -o fish-util.o
+
+libfish-util.so: fish-util.o
+	$(cc) $(shared) $(all) fish-util.c -o libfish-util.so
+
+install:
+	cp fish-util.h $(install_inc_dir)
+	chmod a+r $(install_inc_dir)/fish-util.h
+	cp libfish-util.so $(install_lib_dir)
+	chmod a+r $(install_lib_dir)/libfish-util.so
 	$(ldconfig)
 
-clean: 
+clean:
 	rm -rf .obj
 	rm -f *.o
 	rm -f *.so
+	rm -f .init
+
+.PHONY: all install clean

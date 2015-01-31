@@ -1,0 +1,21 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/functions
+
+USAGE="Usage: $0"
+
+arg="$1"
+
+if [ "$arg" = -h ]; then
+    warn $USAGE
+    exit 0
+fi
+
+chd fish-util
+cmd make .init
+chd ..
+chd fish-utils
+cmd make .init
+chd ..
+
+cmd touch .init

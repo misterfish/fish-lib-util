@@ -1,54 +1,52 @@
-# Not necessary to make fish-util objects available to the outside -- to
-# make fish-utils.o we don't need them and to make libfish-utils.so we use
-
 fish_util_dir = ../fish-util
 
-# necessary on pi? XX
-inc_dirs = /usr/local/include $(fish_util_dir)
-lib_dirs = /usr/local/lib ../fish-util
-inc_dir_install = /usr/local/include
-lib_dir_install = /usr/local/lib
+install_inc_dir = /usr/local/include
+install_lib_dir = /usr/local/lib
 
-# Add -I / -L
-inc_flags = $(shell echo "$(inc_dirs)" | perl -ne 'print join " ", map { "-I$$_" } split m, \s+ ,x')
-lib_flags = $(shell echo "$(lib_dirs)" | perl -ne 'print join " ", map { "-L$$_" } split m, \s+ ,x')
+cc = gcc -std=c99 -fPIC
+shared = -shared
 
-flags_c = -std=c99 -lm -lpthread -lpcre -fPIC $(inc_flags)
-flags_shared = -shared $(lib_flags) -lfish-util
+lib = -lm -lpthread -lpcre
+inc = 
 
-main = fish-utils.c
-objs = $(main) fish-utils/vec.o fish-utils/regex.o
+src = fish-utils/vec.c fish-utils/regex.c fish-utils/main.c fish-utils.h
+objs = fish-utils/vec.o fish-utils/regex.o fish-utils/main.o
 
-all: init libfish-utils.so fish-utils.o
-	
-init: 
-	mkdir -p .obj/fish-utils
+all: .init $(objs) libfish-utils.so fish-utils.o
 
-libfish-utils.so: $(objs)
-	gcc $(flags_shared) $(flags_c) $(objs) \
+.init: $(src) 
+	@ # src_dep (.c and .h files) so people including us know when to remake us.
+	@ # ld so people including us link what we need (e.g. -lm)
+	mkdir -p .obj/fish-utils.o 
+	echo > .obj/fish-utils.o/src_dep $(src)
+	echo > .obj/fish-utils.o/ld $(lib)
+
+libfish-utils.so: fish-utils.o
+	$(cc) $(shared) $(objs) \
 	    -o libfish-utils.so
 
-fish-utils.o: $(main)
-	gcc $(flags_c) $(main) -c -o fish-utils.o
-	touch .obj/fish-utils.o
+$(objs): %.o: %.c
+	@ # < = first prereq
+	$(cc) -c $< -o $@
 
-fish-utils/vec.o: fish-utils/vec.c
-	gcc $(flags_c) $(fish_util) -c fish-utils/vec.c -o fish-utils/vec.o
-	touch .obj/fish-utils/vec.o
-
-fish-utils/regex.o: fish-utils/regex.c
-	gcc $(flags_c) $(fish_util) -c fish-utils/regex.c -o fish-utils/regex.o
-	touch .obj/fish-utils/regex.o
+fish-utils.o: $(src) $(objs)
+	@ # combine mulitiple .o into a total .o file.
+	ld -r $(objs) -o fish-utils.o
 
 install: 
-	mkdir -p $(inc_dir_install)/fish-utils/fish-utils
-	cp fish-utils.h $(inc_dir_install)/fish-utils
-	cp -r fish-utils/*.h $(inc_dir_install)/fish-utils/fish-utils
-	cp libfish-utils.so $(lib_dir_install)
+	mkdir -p $(install_inc_dir)/fish-utils/fish-utils
+	cp fish-utils.h $(install_inc_dir)/fish-utils
+	cp -r fish-utils/*.h $(install_inc_dir)/fish-utils/fish-utils
+	cp libfish-utils.so $(install_lib_dir)
 	$(ldconfig)
 
 clean: 
 	rm -rf .obj
+	rm -rf tmp
 	rm -f *.o
 	rm -f fish-utils/*.o
 	rm -f *.so
+	rm -f .init
+
+
+.PHONY: all install clean 

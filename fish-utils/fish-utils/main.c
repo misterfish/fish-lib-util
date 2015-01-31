@@ -1,7 +1,7 @@
 // here, not header, so not exported
 #define _GNU_SOURCE
 
-#include "fish-utils.h"
+#include "../fish-utils.h"
 
 static vec *_fish_utils_heap;
 

@@ -3,3 +3,8 @@
 
 *.swo
 *.swp
+
+test
+.init
+*/.init
+*/.obj

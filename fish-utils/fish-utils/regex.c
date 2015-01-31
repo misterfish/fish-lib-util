@@ -10,30 +10,30 @@ const int DEFAULT_FLAGS = PCRE_EXTENDED;
 // change to const char*?? XX
 
 
-int match(char* target, char* regexp_s) {
+int match(char *target, char *regexp_s) {
     return match_full(target, regexp_s, NULL, 0, DEFAULT_FLAGS);
 }
 
 // ret[0] is whole match.
-int match_matches(char* target, char* regexp_s, char* ret[]) {
+int match_matches(char *target, char *regexp_s, char *ret[]) {
     return match_full(target, regexp_s, ret, 0, DEFAULT_FLAGS);
 }
 
-int match_matches_flags(char* target, char* regexp_s, char* ret[], int flags) {
+int match_matches_flags(char *target, char *regexp_s, char *ret[], int flags) {
     return match_full(target, regexp_s, ret, 0, flags);
 }
 
-int match_flags(char* target, char* regexp_s, int flags) {
+int match_flags(char *target, char *regexp_s, int flags) {
     return match_full(target, regexp_s, NULL, 0, flags);
 }
 
-int match_full(char* target, char* regexp_s, char* ret[], int target_len /* without \0 */, int flags) {
+int match_full(char *target, char *regexp_s, char *ret[], int target_len /* without \0 */, int flags) {
 
     int idx = -1;
     int rc;
 
     int erroffset;
-    const char* error; 
+    const char *error; 
     pcre *re = pcre_compile(
             regexp_s,
             flags,
@@ -98,7 +98,7 @@ int match_full(char* target, char* regexp_s, char* ret[], int target_len /* with
         if (ovector[a] >= 0) {
             int l = ovector[a];
             int r = ovector[b];
-            char* match = str(r - l + 1);
+            char *match = str(r - l + 1);
             memcpy(match, target + l, r - l); 
             if (ret) ret[++idx] = match; // caller should free
 
