@@ -41,12 +41,13 @@ install:
 	$(ldconfig)
 
 clean: 
-	rm -rf .obj
 	rm -rf tmp
 	rm -f *.o
 	rm -f fish-utils/*.o
 	rm -f *.so
+
+mrproper: clean
 	rm -f .init
+	rm -rf .obj
 
-
-.PHONY: all install clean 
+.PHONY: all install clean mrproper

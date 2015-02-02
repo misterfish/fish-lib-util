@@ -37,9 +37,11 @@ install:
 	$(ldconfig)
 
 clean:
-	rm -rf .obj
 	rm -f *.o
 	rm -f *.so
-	rm -f .init
 
-.PHONY: all install clean
+mrproper: clean
+	rm -f .init
+	rm -rf .obj
+
+.PHONY: all install clean mrproper

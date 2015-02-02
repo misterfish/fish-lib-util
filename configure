@@ -11,6 +11,8 @@ if [ "$arg" = -h ]; then
     exit 0
 fi
 
+chd "$(dirname "$0")"
+
 chd fish-util
 cmd make .init
 chd ..
