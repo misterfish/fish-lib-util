@@ -110,6 +110,20 @@
     _warn_perr_msg("Something's wrong: ", x); \
 } while (0);
 
+#define warn_perr_msg(x) do { \
+    _(); \
+    perr(); \
+    BR(_s); \
+    if (*x == '\0') \
+        warn("%s", _t); \
+    else \
+        warn("%s (%s)", x, _t); \
+} while(0); 
+
+#define warn_perr do { \
+    warn_perr_msg(""); \
+} while(0);
+
 /* Synonym for iwarn.
  * piep = 'squeak'
  */
