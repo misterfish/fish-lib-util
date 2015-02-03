@@ -1,14 +1,12 @@
 #define _GNU_SOURCE
 
-/* guard */
-#ifdef __FISH_UTIL_H
-#else
- #define __FISH_UTIL_H
-/* guard */
-
 #include <string.h>
 #include <wchar.h>
 #include <stdlib.h>
+
+#ifdef __FISH_UTIL_H
+#else
+ #define __FISH_UTIL_H
 
 #ifndef DEBUG_LENGTH
  #define DEBUG_LENGTH 200
