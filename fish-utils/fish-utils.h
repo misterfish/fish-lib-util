@@ -7,22 +7,26 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* DEBUG is globally exported. Niet handig. XX
+ */
+
+/*
 // be polite
 #ifdef DEBUG
  #define SAVE_DEBUG
 #else
  #define SAVE_UNDEBUG
 #endif
+*/
 
 /* Define/undef here:
-
 #define DEBUG
-
  */
 
 
 #include <fish-util.h>
 
+/*
 #ifdef SAVE_DEBUG
  #define DEBUG
 #endif
@@ -30,6 +34,7 @@
 #ifdef SAVE_UNDEBUG
  #undef DEBUG
 #endif
+*/
 
 #include "fish-utils/vec.h"
 #include "fish-utils/regex.h"
