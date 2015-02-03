@@ -29,7 +29,7 @@
 # define debug(...) {}
 #endif
 
-#define __FISH_WARN_LENGTH 500
+#define _FISH_WARN_LENGTH 500
 
 /* iwarn, ierr: intended for definitely internal (not user) errors.
  * Print file and line num, that's why macro.
@@ -37,9 +37,9 @@
 #define iwarn_msg(x, ...) do {\
     char *pref = f_get_warn_prefix(__FILE__, __LINE__); \
     int len = strlen(pref); \
-    char *warning = str(__FISH_WARN_LENGTH); \
-    snprintf(warning, __FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
-    int len2 = strnlen(warning, __FISH_WARN_LENGTH);  \
+    char *warning = str(_FISH_WARN_LENGTH); \
+    snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
+    int len2 = strnlen(warning, _FISH_WARN_LENGTH);  \
     char *internal = *warning == '\0' ? "Something's wrong." : "Something's wrong: "; \
     int len3 = strlen(internal); \
     char *new = str(len + len2 + len3 + 1 + 1);   \
@@ -60,9 +60,9 @@
 #define ierr_msg(x, ...) do {\
     char *pref = f_get_warn_prefix(__FILE__, __LINE__); \
     int len = strlen(pref); \
-    char *_error = str(__FISH_WARN_LENGTH); \
-    snprintf(_error, __FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
-    int len2 = strnlen(_error, __FISH_WARN_LENGTH);  \
+    char *_error = str(_FISH_WARN_LENGTH); \
+    snprintf(_error, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
+    int len2 = strnlen(_error, _FISH_WARN_LENGTH);  \
     char *internal = *_error == '\0' ? "Internal error." : "Internal error: "; \
     int len3 = strlen(internal); \
     char *new = str(len + len2 + len3 + 1 + 1);   \
@@ -82,18 +82,20 @@
     ierr_perr_msg(""); \
 } while(0);
 
-#define ierr_perr_msg(x) do { \
-    _warn_perr_msg("Error: ", x); \
+#define ierr_perr_msg(x, ...) do { \
+    char *warning = str(_FISH_WARN_LENGTH); \
+    snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
+    _warn_perr_msg("Error: ", warning); \
     exit(1); \
 } while(0);
 
-#define _warn_perr_msg(pref, x) do { \
-    char *msg = str(strlen(x) + 2);    \
-    char *left_paren = str(2); \
-    char *right_paren = str(2); \
+#define _warn_perr_msg(pref, x, ...) do { \
+    char *msg = str(_FISH_WARN_LENGTH); \
+    char *left_paren; \
+    char *right_paren; \
     if (strlen(x) > 0) { \
-        sprintf(msg, "%s ", x); \
-        left_paren = "("; \
+        snprintf(msg, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
+        left_paren = " ("; \
         right_paren = ")"; \
     } \
     else { \
@@ -106,18 +108,20 @@
     warn_perr_msg(""); \
 } while (0);
 
-#define iwarn_perr_msg(x) do { \
-    _warn_perr_msg("Something's wrong: ", x); \
+#define iwarn_perr_msg(x, ...) do { \
+    char *warning = str(_FISH_WARN_LENGTH); \
+    snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
+    _warn_perr_msg("Something's wrong: ", warning); \
 } while (0);
 
-#define warn_perr_msg(x) do { \
-    _(); \
-    perr(); \
-    BR(_s); \
-    if (*x == '\0') \
-        warn("%s", _t); \
-    else \
-        warn("%s (%s)", x, _t); \
+#define warn_perr_msg(x, ...) do { \
+    if (strlen(x) == 0) \
+        warn("%s", perr()); \
+    else { \
+        char *warning = str(_FISH_WARN_LENGTH); \
+        snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
+        warn("%s (%s)", warning, perr()); \
+    } \
 } while(0); 
 
 #define warn_perr do { \

@@ -11,6 +11,7 @@ int main(int argc, char **argv) {
     piep;
     //iwarn_msg("hello");
     //iwarn;
-    iwarn_perr_msg("hello");
+    //iwarn_perr_msg("hello");
+    warn_perr_msg("hello %d", 42);
 }
 
