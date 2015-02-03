@@ -7,7 +7,7 @@ cc = gcc -std=c99 -fPIC
 shared = -shared
 
 lib = -lm -lpthread -lpcre
-inc = 
+inc = -I$(fish_util_dir)
 
 src = fish-utils/vec.c fish-utils/regex.c fish-utils/main.c fish-utils.h
 objs = fish-utils/vec.o fish-utils/regex.o fish-utils/main.o
@@ -27,7 +27,7 @@ libfish-utils.so: fish-utils.o
 
 $(objs): %.o: %.c
 	@ # < = first prereq
-	$(cc) -c $< -o $@
+	$(cc) $(inc) -c $< -o $@
 
 fish-utils.o: $(src) $(objs)
 	@ # combine mulitiple .o into a total .o file.
