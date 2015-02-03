@@ -291,6 +291,8 @@ bool test_d(const char *file);
 
 char *f_get_warn_prefix(char *file, int line);
 
+int f_get_max_color_length();
+int f_get_color_reset_length();
 
 /* guard */
 #endif

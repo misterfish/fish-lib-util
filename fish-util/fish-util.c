@@ -1385,6 +1385,14 @@ wchar_t *d8(char *s) {
     return line8;
 }
 
+int f_get_max_color_length() {
+    return COLOR_LENGTH;
+}
+
+int f_get_color_reset_length() {
+    return COLOR_LENGTH_RESET;
+}
+
 /* Private functions.
  */
 
