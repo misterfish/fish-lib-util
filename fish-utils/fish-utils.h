@@ -1,3 +1,5 @@
+#ifndef __FISH_UTILS_H
+
 #define __FISH_UTILS_H 1
 
 #define mlc(a) malloc(sizeof(a));
@@ -42,3 +44,5 @@
 void f_track_heap(void *ptr);
 void fish_utils_init();
 void fish_utils_cleanup();
+
+#endif
