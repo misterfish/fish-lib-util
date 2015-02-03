@@ -32,6 +32,7 @@
 #define _FISH_WARN_LENGTH 500
 
 /* iwarn, ierr: intended for definitely internal (not user) errors.
+ * Probably best if it's restricted to programmer errors.
  * Print file and line num, that's why macro.
  */
 #define iwarn_msg(x, ...) do {\
