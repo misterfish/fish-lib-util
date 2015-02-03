@@ -24,58 +24,70 @@
     snprintf (dbg, DEBUG_LENGTH, x, ##__VA_ARGS__); \
     info("%s:debug:%s", pref, dbg); \
     free(dbg); \
-} while(0)
+} while(0);
 #else
 # define debug(...) {}
 #endif
 
 #define __FISH_WARN_LENGTH 500
 
-/*  With file and line num.
-  * snprintf: includes \0
+/* iwarn, ierr: intended for definitely internal (not user) errors.
+ * Print file and line num, that's why macro.
  */
-#define warnp(x, ...) do {\
+#define iwarn_msg(x, ...) do {\
     char *pref = f_get_warn_prefix(__FILE__, __LINE__); \
     int len = strlen(pref); \
     char *warning = str(__FISH_WARN_LENGTH); \
     snprintf(warning, __FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
     int len2 = strnlen(warning, __FISH_WARN_LENGTH);  \
-    char *new = str(len + len2 + 1 + 1);   \
-    sprintf(new, "%s %s", pref, warning);  \
+    char *internal = *warning == '\0' ? "Something's wrong." : "Something's wrong: "; \
+    int len3 = strlen(internal); \
+    char *new = str(len + len2 + len3 + 1 + 1);   \
+    sprintf(new, "%s %s%s", pref, internal, warning);  \
     warn(new); \
     free(warning); \
     free(new); \
 } while (0);
 
-/* With file and line num.
-  * snprintf: includes \0
- */
-#define errp(x, ...) do {\
+#define iwarn do {\
+    iwarn_msg(""); \
+} while (0); 
+
+#define ierr do { \
+    ierr_msg(""); \
+} while (0);
+
+#define ierr_msg(x, ...) do {\
     char *pref = f_get_warn_prefix(__FILE__, __LINE__); \
     int len = strlen(pref); \
     char *_error = str(__FISH_WARN_LENGTH); \
     snprintf(_error, __FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
     int len2 = strnlen(_error, __FISH_WARN_LENGTH);  \
-    char *new = str(len + len2 + 1 + 1);   \
-    sprintf(new, "%s %s", pref, _error);  \
+    char *internal = *_error == '\0' ? "Internal error." : "Internal error: "; \
+    int len3 = strlen(internal); \
+    char *new = str(len + len2 + len3 + 1 + 1);   \
+    sprintf(new, "%s %s%s", pref, internal, _error);  \
     err(new); \
 } while (0);
 
 #define warnpref f_get_warn_prefix(__FILE__, __LINE__)
 
-#define die() do { \
-    __die(__FILE__, __LINE__); \
-} while(0)
+/* 
+ * err, warn: For when it's not definitely internal. Could be user error or
+ * something like file not found, for example.
+ * Those are functions, not macros (cuz don't need file + line).
+ */
 
-#define die_msg(e) do { \
-    __die_msg(__FILE__, __LINE__, e); \
-} while(0)
+#define ierr_perr() do { \
+    ierr_perr_msg(""); \
+} while(0);
 
-#define die_perr() do { \
-    die_perr_msg(""); \
-}  while(0)
+#define ierr_perr_msg(x) do { \
+    _warn_perr_msg("Error: ", x); \
+    exit(1); \
+} while(0);
 
-#define die_perr_msg(x) do { \
+#define _warn_perr_msg(pref, x) do { \
     char *msg = str(strlen(x) + 2);    \
     char *left_paren = str(2); \
     char *right_paren = str(2); \
@@ -87,14 +99,23 @@
     else { \
         msg = left_paren = right_paren = ""; \
     } \
-    warn("Error: %s%s%s%s", msg, left_paren, R_(perr()), right_paren ); \
-    __die(__FILE__, __LINE__); \
-} while(0)
+    warn("%s%s%s%s%s", pref, msg, left_paren, R_(perr()), right_paren ); \
+} while(0);
 
+#define iwarn_perr() do { \
+    warn_perr_msg(""); \
+} while (0);
+
+#define iwarn_perr_msg(x) do { \
+    _warn_perr_msg("Something's wrong: ", x); \
+} while (0);
+
+/* Synonym for iwarn.
+ * piep = 'squeak'
+ */
 #define piep do { \
-    char *pref = f_get_warn_prefix(__FILE__, __LINE__); \
-    warn("Something's wrong (%s)", pref); \
-} while(0) ;
+    iwarn; \
+} while (0); 
 
 #define pieprf do { \
     piep; \
@@ -172,13 +193,11 @@
 
 void spr(const char *format, ...);
 
-// kill XX
 char *spr_(const char *format, int size, ...);
 
 void error_pref();
 void err(const char *format, ...);
-void __die(const char *file, int line);
-void __die_msg(const char *file, int line, const char *msg);
+
 //void warn(const char* s);
 void warn_pref();
 void warn(const char *format, ...);

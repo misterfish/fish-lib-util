@@ -233,7 +233,7 @@ FILE *safeopen_f(char *filespec, int flags) {
     if (test_d(filename)) {
         _();
         Y(filename);
-        warnp("File %s is a directory (can't open)", _s);
+        iwarn("File %s is a directory (can't open)", _s);
         err = true;
     }
     else {
@@ -244,7 +244,7 @@ FILE *safeopen_f(char *filespec, int flags) {
                 _();
                 Y(filename);
                 CY(mode);
-                warnp("Couldn't open %s for %s: %s", _s, _t, perr());
+                iwarn("Couldn't open %s for %s: %s", _s, _t, perr());
             }
         }
     }
@@ -332,7 +332,7 @@ char *f_get_warn_prefix(char *file, int line) {
         warn_prefix_size = len;
         warn_prefix = (char*) realloc((void*) warn_prefix, len * sizeof(char));
         if (!warn_prefix) 
-            die_perr();
+            ierr_perr();
     }
 
     sprintf(warn_prefix, "%s:%s", file, _t);
@@ -667,6 +667,7 @@ void err(const char *format, ...) {
     exit(1);
 }
 
+/*
 // used in die() macros.
 void __die(const char *file, int line) {
     // leaks, don't care.
@@ -680,7 +681,7 @@ void __die_msg(const char *file, int line, const char *msg) {
     // check for trunc ??
     err(spr_("Unexpected error (%s:%s) -- %s", ERR_LENGTH, file, Y_(spr_("%d", 100, line)), msg));
 }
-
+*/
 
 void warn(const char *format, ...) {
     char *new = str(WARN_LENGTH);
@@ -1030,7 +1031,7 @@ bool socket_unix_message_f(const char *filename, const char *msg, char *response
         spr("%d", buf_length - 1);
         CY(_s);
 
-        warnp("msg too long (max is %s)", _t);
+        iwarn("msg too long (max is %s)", _t);
         return false;
     }
 
@@ -1038,7 +1039,7 @@ bool socket_unix_message_f(const char *filename, const char *msg, char *response
     int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 
     if (sockfd < 0) {
-        warnp("Error opening socket %s: %s", filename_color, perr());
+        iwarn("Error opening socket %s: %s", filename_color, perr());
         return false;
     }
 
@@ -1046,14 +1047,14 @@ bool socket_unix_message_f(const char *filename, const char *msg, char *response
     strncpy(serv_addr.sun_path, filename, filename_len);
 
     if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof (serv_addr) ) < 0) {
-        warnp("Error connecting to socket %s: %s", filename_color, perr());
+        iwarn("Error connecting to socket %s: %s", filename_color, perr());
         return false;
     }
 
     int rc = write(sockfd, msg_s, msg_len + 1);
     
     if (rc < 0) {
-        warnp("Error writing to socket %s: %s", filename_color, perr());
+        iwarn("Error writing to socket %s: %s", filename_color, perr());
         return false;
     }
 
@@ -1062,7 +1063,7 @@ bool socket_unix_message_f(const char *filename, const char *msg, char *response
     for (i = 0; i < buf_length; i++) {
         int rc = read(sockfd, c, 1);
         if (rc < 0) {
-            warnp("Error reading from socket %s: %s", filename_color, perr());
+            iwarn("Error reading from socket %s: %s", filename_color, perr());
             return false;
         }
         if (*c == '\n') {
