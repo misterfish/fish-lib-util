@@ -144,6 +144,11 @@
     return true; \
 } while (0) ;
 
+#define piepr1 do { \
+    piep; \
+    return 1; \
+} while (0) ;
+
 #define piepr do { \
     piep; \
     return; \
