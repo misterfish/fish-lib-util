@@ -39,7 +39,7 @@
     char *warning = str(_FISH_WARN_LENGTH); \
     snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
     int len2 = strnlen(warning, _FISH_WARN_LENGTH);  \
-    char *internal = *warning == '\0' ? "Something's wrong." : "Something's wrong: "; \
+    char *internal = _empty(warning) ? "Something's wrong." : "Something's wrong: "; \
     int len3 = strlen(internal); \
     char *new = str(len + len2 + len3 + 1 + 1);   \
     sprintf(new, "%s %s%s", pref, internal, warning);  \
@@ -48,21 +48,24 @@
     free(new); \
 } while (0);
 
+/* Avoid compiler warnings about empty sprintf format.
+ */
 #define iwarn do {\
-    iwarn_msg(""); \
+    iwarn_msg("%s", ""); \
 } while (0); 
 
 #define ierr do { \
-    ierr_msg(""); \
+    ierr_msg("%s", ""); \
 } while (0);
 
 #define ierr_msg(x, ...) do {\
     char *pref = f_get_warn_prefix(__FILE__, __LINE__); \
     int len = strlen(pref); \
     char *_error = str(_FISH_WARN_LENGTH); \
-    snprintf(_error, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
+    if (!_empty(x)) \
+        snprintf(_error, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
     int len2 = strnlen(_error, _FISH_WARN_LENGTH);  \
-    char *internal = *_error == '\0' ? "Internal error." : "Internal error: "; \
+    char *internal = _empty(_error) ? "Internal error." : "Internal error: "; \
     int len3 = strlen(internal); \
     char *new = str(len + len2 + len3 + 1 + 1);   \
     sprintf(new, "%s %s%s", pref, internal, _error);  \
@@ -78,21 +81,28 @@
  */
 
 #define ierr_perr() do { \
-    ierr_perr_msg(""); \
+    ierr_perr_msg("%s", ""); \
 } while(0);
 
 #define ierr_perr_msg(x, ...) do { \
     char *warning = str(_FISH_WARN_LENGTH); \
-    snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
+    if (!_empty(x)) \
+        snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
     _warn_perr_msg("Error: ", warning); \
     exit(1); \
 } while(0);
+
+/* Only checks if first char is null.
+ * No strlen.
+ */
+
+#define _empty(x) (!strcmp(x, ""))
 
 #define _warn_perr_msg(pref, x, ...) do { \
     char *msg = str(_FISH_WARN_LENGTH); \
     char *left_paren; \
     char *right_paren; \
-    if (strlen(x) > 0) { \
+    if (!_empty(x)) { \
         snprintf(msg, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
         left_paren = " ("; \
         right_paren = ")"; \
@@ -104,7 +114,7 @@
 } while(0);
 
 #define iwarn_perr() do { \
-    warn_perr_msg(""); \
+    warn_perr_msg("%s", ""); \
 } while (0);
 
 #define iwarn_perr_msg(x, ...) do { \
@@ -114,7 +124,7 @@
 } while (0);
 
 #define warn_perr_msg(x, ...) do { \
-    if (strlen(x) == 0) \
+    if (_empty(x)) { \
         warn("%s", perr()); \
     else { \
         char *warning = str(_FISH_WARN_LENGTH); \
