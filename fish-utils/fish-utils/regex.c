@@ -4,19 +4,13 @@
 
 #include "../fish-utils.h"
 
-const int MATCH_EXTENDED = PCRE_EXTENDED;
-
-const int DEFAULT_FLAGS = PCRE_EXTENDED;
-// change to const char*?? XX
-
-
 int match(char *target, char *regexp_s) {
-    return match_full(target, regexp_s, NULL, 0, DEFAULT_FLAGS);
+    return match_full(target, regexp_s, NULL, 0, F_REGEX_DEFAULT);
 }
 
 // ret[0] is whole match.
 int match_matches(char *target, char *regexp_s, char *ret[]) {
-    return match_full(target, regexp_s, ret, 0, DEFAULT_FLAGS);
+    return match_full(target, regexp_s, ret, 0, F_REGEX_DEFAULT);
 }
 
 int match_matches_flags(char *target, char *regexp_s, char *ret[], int flags) {
@@ -32,11 +26,15 @@ int match_full(char *target, char *regexp_s, char *ret[], int target_len /* with
     int idx = -1;
     int rc;
 
+    int pass_flags;
+    if (flags && F_REGEX_EXTENDED)
+        pass_flags |= PCRE_EXTENDED;
+
     int erroffset;
     const char *error; 
     pcre *re = pcre_compile(
             regexp_s,
-            flags,
+            pass_flags,
             &error, // static, don't free
             &erroffset,
             NULL // char tables

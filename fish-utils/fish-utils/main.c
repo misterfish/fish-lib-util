@@ -15,8 +15,8 @@ void f_track_heap(void *ptr) {
 }
 
 void fish_utils_cleanup() {
-    fish_util_cleanup();
     if (! _fish_utils_heap) 
         piepr;
-    vec_destroy_flags(_fish_utils_heap, VEC_DESTROY_DEEP);
+// XX !
+vec_destroy_flags(_fish_utils_heap, VEC_DESTROY_DEEP);
 }

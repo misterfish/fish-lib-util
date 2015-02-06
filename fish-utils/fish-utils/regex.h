@@ -1,4 +1,6 @@
-const int MATCH_EXTENDED;
+#define F_REGEX_EXTENDED      0x01
+
+#define F_REGEX_DEFAULT             F_REGEX_EXTENDED
 
 int match(char *target, char *regexp_s);
 // caller should free ret

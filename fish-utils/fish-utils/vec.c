@@ -75,6 +75,10 @@ void *vec_last(vec *v) {
     return v->_data[v->n - 1];
 }
 
+bool vec_destroy_deep(vec *v) {
+    return vec_destroy_flags(v, VEC_DESTROY_DEEP);
+}
+
 bool vec_destroy_flags(vec *v, int flags) {
     if (v == NULL) 
         pieprf;

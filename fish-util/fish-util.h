@@ -12,6 +12,10 @@
  #define DEBUG_LENGTH 200
 #endif
 
+/* Be careful using _() in the macros, can have unexpected consequences for
+ * caller.
+ */
+
 /* ##__VA_ARGS__ to swallow the comma if omitted.
  * snprintf: does put \0
  */
@@ -89,6 +93,7 @@
     if (!_empty(x)) \
         snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
     _warn_perr_msg("Error: ", warning); \
+    free(warning); \
     exit(1); \
 } while(0);
 
@@ -121,15 +126,17 @@
     char *warning = str(_FISH_WARN_LENGTH); \
     snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
     _warn_perr_msg("Something's wrong: ", warning); \
+    free(warning); \
 } while (0);
 
 #define warn_perr_msg(x, ...) do { \
-    if (_empty(x)) { \
+    if (_empty(x)) \
         warn("%s", perr()); \
     else { \
         char *warning = str(_FISH_WARN_LENGTH); \
         snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
         warn("%s (%s)", warning, perr()); \
+        free(warning); \
     } \
 } while(0); 
 
@@ -243,7 +250,7 @@ FILE *sysw(const char *cmd);
 int sysx(const char *cmd);
 int sysxf(const char *orig, ...);
 int sysclose(FILE *f);
-int sysclose_f(FILE *f, const char *cmd);
+int sysclose_f(FILE *f, const char *cmd, int flags);
 
 bool yes_no();
 bool yes_no_flags(int, int);
@@ -316,6 +323,9 @@ char *f_field(int width, char *string, int max_len);
 bool is_int_str(char *s);
 bool is_int_strn(char *s, int maxlen);
 
+/* Not generally necessary, only to restart after a cleanup.
+ */
+void fish_util_init();
 void fish_util_cleanup();
 void chop(char *s);
 void chop_w(wchar_t *s);

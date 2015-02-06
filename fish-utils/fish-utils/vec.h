@@ -12,5 +12,6 @@ bool vec_add(vec *v, void *ptr);
 void *vec_get(vec *v, int n);
 void *vec_last(vec *v);
 bool vec_destroy(vec *v);
+bool vec_destroy_deep(vec *v);
 bool vec_destroy_flags(vec *v, int flags);
 bool vec_clear(vec *v);

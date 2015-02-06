@@ -435,8 +435,8 @@ char *spr_(const char *format, int size /*with null*/, ...) {
 
 void _() {
     if (! _static_str_initted) {
-        _static_str_initted = true;
         _static_str_init();
+        _static_str_initted = true;
     }
 
     _static_str_idx = -1;
@@ -568,7 +568,7 @@ const char *perr() {
         return ret;
     }
     else {
-        warn("fixme: perr stored string in buf, possible leak.");
+        iwarn("fixme: perr stored string in buf, possible leak.");
         free(st);
         return ret;
     }
@@ -717,7 +717,7 @@ void verbose_cmds(bool b) {
 
 /* Non-null FILE means fork or pipe succeeded, but command could still fail
  * (e.g. command not found).
- * Caller should check for NULL, and call sysclose.
+ * Caller should check for NULL, and call sysclose to free (not free())
  */
 FILE *sysr(const char *cmd) {
     if (_verbose) _sys_say(cmd);
@@ -733,7 +733,7 @@ FILE *sysr(const char *cmd) {
 
 /* Non-null FILE means fork or pipe succeeded, but command could still fail
  * (e.g. command not found).
- * Caller should call sysclose.
+ * Caller should call sysclose afterwards (and not free())
  */
 FILE *sysw(const char *cmd) {
     if (_verbose) _sys_say(cmd);
@@ -747,9 +747,11 @@ FILE *sysw(const char *cmd) {
     return f;
 }
 
-// 0 means good.
-int sysclose_f(FILE *f, const char *cmd) {
+/* 0 means good.
+ */
+int sysclose_f(FILE *f, const char *cmd, int flags) {
     int i = pclose(f);
+    bool quiet = flags && F_QUIET;
     if (i != 0) {
         // Perr doesn't work here -- if the shell fails it should print
         // something to stderr, and set non-zero exit, but it won't (can't)
@@ -764,13 +766,19 @@ int sysclose_f(FILE *f, const char *cmd) {
             spr("");
         }
         spr("Error with cmd%s.", _t);
-        _die ? err(_u) : warn(_u);
+        if (_die) {
+            err(_u);
+        }
+        else {
+            if (!quiet) 
+                warn(_u);
+        }
     }
     return i;
 }
 
 int sysclose(FILE *f) {
-    return sysclose_f(f, NULL);
+    return sysclose_f(f, NULL, 0);
 }
 
 // 0 means good
@@ -786,7 +794,9 @@ int sysxf(const char *orig, ...) {
     return c;
 }
 
-// 0 means good
+/* 0 means good
+ * Don't call sysclose or free.
+ */
 int sysx(const char *cmd) {
     FILE *f = sysr(cmd);
 
@@ -797,7 +807,7 @@ int sysx(const char *cmd) {
     free(buf);
 
     if (f != NULL) {
-        int ret = sysclose_f(f, cmd);
+        int ret = sysclose_f(f, cmd, 0);
         return ret;
     }
     else return 1;
@@ -816,9 +826,9 @@ int sys(char *ret, const char *cmd) {
 }
 
 bool f_sig(int signum, void *func) {
-    // Ok that it's thrown away apparently.
-    struct sigaction action;
-    memset(&action, 0, sizeof(action));
+    /* Ok that it's thrown away.
+     */
+    struct sigaction action = {0};
     action.sa_handler = func;
     int rc = sigaction(signum, &action, NULL);
     if (rc) {
@@ -1220,6 +1230,17 @@ bool is_int_str(char *s) {
     */
 }
 
+/* Not generally necessary, unless you want to start over after having
+ * called _cleanup. (And even then it's not currently necessary).
+ */
+void fish_util_init() {
+    _static_str_init();
+    /* Merge these? XX
+     */
+    _static_str_initted = true;
+    _static_strings_freed = false;
+}
+
 void fish_util_cleanup() {
     if (!_static_strings_freed) {
         _static_strings_free();
@@ -1454,4 +1475,5 @@ static void _static_strings_free() {
         char *cc = *c;
         free(cc);
     }
+    _static_str_initted = false;
 }
