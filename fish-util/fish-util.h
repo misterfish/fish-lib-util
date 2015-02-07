@@ -84,7 +84,7 @@
  * Those are functions, not macros (cuz don't need file + line).
  */
 
-#define ierr_perr() do { \
+#define ierr_perr do { \
     ierr_perr_msg("%s", ""); \
 } while(0);
 

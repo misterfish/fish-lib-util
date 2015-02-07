@@ -332,7 +332,7 @@ char *f_get_warn_prefix(char *file, int line) {
         warn_prefix_size = len;
         warn_prefix = (char*) realloc((void*) warn_prefix, len * sizeof(char));
         if (!warn_prefix) 
-            ierr_perr();
+            ierr_perr;
     }
 
     sprintf(warn_prefix, "%s:%s", file, _t);
