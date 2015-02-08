@@ -21,12 +21,13 @@ int match_flags(char *target, char *regexp_s, int flags) {
     return match_full(target, regexp_s, NULL, 0, flags);
 }
 
+// -> bool XX
 int match_full(char *target, char *regexp_s, char *ret[], int target_len /* without \0 */, int flags) {
 
     int idx = -1;
     int rc;
 
-    int pass_flags;
+    int pass_flags = 0;
     if (flags && F_REGEX_EXTENDED)
         pass_flags |= PCRE_EXTENDED;
 
@@ -40,13 +41,49 @@ int match_full(char *target, char *regexp_s, char *ret[], int target_len /* with
             NULL // char tables
             );
 
+    if (!re) {
+        _();
+        BR(regexp_s);
+        iwarn_msg("Error compiling regex %s (%s)", _s, error);
+        return false;
+    }
+
     int num_groups;
-    if (pcre_fullinfo(re, 
+    if ((rc = pcre_fullinfo(re, 
             NULL, // no study
             PCRE_INFO_CAPTURECOUNT,
             &num_groups
-            )) { 
-        piep;
+            ))) { 
+        _();
+        BR(regexp_s);
+        /* man pcreapi */
+        char *msg;
+        switch(rc) {
+            case PCRE_ERROR_NULL:
+                msg = "'code' or 'where' was null";
+                break;
+            case PCRE_ERROR_BADMAGIC:
+                msg = "magic number not found"; // ?
+                break;
+                /*
+                 * older pcre doesn't have this
+            case PCRE_ERROR_BADENDIANNESS:
+                msg = "the pattern was compiled with different endian-ness";
+                break;
+                */
+            case PCRE_ERROR_BADOPTION:
+                msg = "bad option given (value of 'what' was invalid)";
+                break;
+                /*
+                 * older pcre doesn't have this
+            case PCRE_ERROR_UNSET:
+                msg = "the requested field is not set";
+                break;
+                */
+            default:
+                msg = "unknown error";
+        }
+        iwarn("Error analysing pattern %s (%s)", _s, msg);
         pcre_free(re);
         return false;
     }
