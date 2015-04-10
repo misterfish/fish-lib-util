@@ -73,6 +73,8 @@
     int len3 = strlen(internal); \
     char *new = str(len + len2 + len3 + 1 + 1);   \
     sprintf(new, "%s %s%s", pref, internal, _error);  \
+    free(pref); \
+    free(_error); \
     err(new); \
 } while (0);
 
@@ -235,7 +237,7 @@ void spr(const char *format, ...);
 char *spr_(const char *format, int size, ...);
 
 void error_pref();
-void err(const char *format, ...);
+void err(char *format, ...);
 
 //void warn(const char* s);
 void warn_pref();

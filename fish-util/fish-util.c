@@ -315,6 +315,9 @@ void _static_strings_save() {
     _static_strings_save_restore(0);
 }
 
+/* Old: caller should not free.
+ * New: caller should free. No need to be global, either XX
+ */
 char *f_get_warn_prefix(char *file, int line) {
     _static_strings_save();
 
@@ -644,7 +647,7 @@ void info(const char *format, ...) {
     free(new2);
 }
 
-void err(const char *format, ...) {
+void err(char *format, ...) {
     char *new = str(ERR_LENGTH);
     char *new2 = str(ERR_LENGTH + 1); // for checking truncations
     va_list arglist, arglist_copy;
@@ -664,6 +667,10 @@ void err(const char *format, ...) {
     free(c);
     free(new);
     free(new2);
+    free(format);
+
+    fish_util_cleanup();
+
     exit(1);
 }
 
@@ -1247,10 +1254,12 @@ void fish_util_cleanup() {
         _static_strings_freed = true;
     }
 
+    /*
     if (warn_prefix_size) {
         free(warn_prefix);
         warn_prefix_size = 0;
     }
+    */
     if (mystat_initted) {
         free(mystat);
         mystat_initted = false;
