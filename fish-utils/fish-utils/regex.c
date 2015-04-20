@@ -4,6 +4,9 @@
 
 #include "../fish-utils.h"
 
+/* In all functions where ret is filled with matches, the caller should free
+ * each element, including ret[0] (the whole match).
+ */
 int match(char *target, char *regexp_s) {
     return match_full(target, regexp_s, NULL, 0, F_REGEX_DEFAULT);
 }
@@ -28,8 +31,10 @@ int match_full(char *target, char *regexp_s, char *ret[], int target_len /* with
     int rc;
 
     int pass_flags = 0;
-    if (flags && F_REGEX_EXTENDED)
+    if (flags & F_REGEX_EXTENDED)
         pass_flags |= PCRE_EXTENDED;
+
+    bool auto_gc = (flags & F_REGEX_NO_FREE_MATCHES) ? false : true;
 
     int erroffset;
     const char *error; 
@@ -44,7 +49,7 @@ int match_full(char *target, char *regexp_s, char *ret[], int target_len /* with
     if (!re) {
         _();
         BR(regexp_s);
-        iwarn_msg("Error compiling regex %s (%s)", _s, error);
+        iwarn_fmt("Error compiling regex %s (%s)", _s, error);
         return false;
     }
 
@@ -135,10 +140,15 @@ int match_full(char *target, char *regexp_s, char *ret[], int target_len /* with
             int r = ovector[b];
             char *match = str(r - l + 1);
             memcpy(match, target + l, r - l); 
-            if (ret) ret[++idx] = match; // caller should free
+            if (ret) 
+                ret[++idx] = match; 
 
-            f_track_heap(match);
-            //vec_add(_fish_utils_heap, match);
+            /* match'es will be freed when fish_utils_cleanup() is
+             * called. convenient but footprint will get big if program does
+             * lots of matches.
+             */
+            if (auto_gc)
+                f_track_heap(match);
         }
         a += 2;
         b += 2;

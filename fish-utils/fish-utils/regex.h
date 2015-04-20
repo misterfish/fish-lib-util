@@ -1,4 +1,8 @@
-#define F_REGEX_EXTENDED      0x01
+#define F_REGEX_EXTENDED            0x01
+/* If set, caller of match functions should free all members of the return
+ * array.
+ */
+#define F_REGEX_NO_FREE_MATCHES     0x02
 
 #define F_REGEX_DEFAULT             F_REGEX_EXTENDED
 

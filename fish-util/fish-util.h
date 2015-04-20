@@ -1,24 +1,26 @@
+#ifdef FISH_UTIL_H
+#else
+#define FISH_UTIL_H
+
 #define _GNU_SOURCE
 
+#include <stdbool.h>
+#include <sys/types.h>
+#include <stdio.h>
 #include <string.h>
 #include <wchar.h>
 #include <stdlib.h>
-
-#ifdef __FISH_UTIL_H
-#else
- #define __FISH_UTIL_H
 
 #ifndef DEBUG_LENGTH
  #define DEBUG_LENGTH 200
 #endif
 
-/* Be careful using _() in the macros, can have unexpected consequences for
- * caller.
+/* Don't use _() in the macros: can have unexpected consequences for caller.
  */
 
-/* ##__VA_ARGS__ to swallow the comma if omitted.
- * snprintf: does put \0
+/* ##__VA_ARGS__ to swallow the preceding comma if omitted.
  */
+
 #ifdef DEBUG 
 # define debug(x, ...) do { \
     char *pref = f_get_warn_prefix(__FILE__, __LINE__); \
@@ -31,37 +33,155 @@
 # define debug(...) {}
 #endif
 
+/* This should disapper (see fish-lib-asound)  XX
+ */
 #define _FISH_WARN_LENGTH 500
 
-/* iwarn, ierr: intended for definitely internal (not user) errors.
- * Probably best if it's restricted to programmer errors.
- * Print file and line num, that's why macro.
+/* 
+ * Some nice-to-look-at output and less tedious coding. 
+ *
+ * It is (probably) GCC-specific -- to keep it portable we could have used
+ * __VA_ARGS__ instead of args..., but there is still no good way to do the
+ * ##__VA_ARGS__ trick to eat the comma without GCC.
+ *
+ * #args makes it into a string, commas and all. 
+ * Becomes empty string if arg not given (handy).
+ * Becomes non-sense string if arg is a list (not handy).
+ * Gets extra set of "" if arg is a string (annoying).
+ *
+ * msg... will only work if it's a single argument, not a list.
+ * This is because C99 is strict about leaving the comma if the only
+ * argument is variadic (for some reason).
+ *
+ * Use the _fmt versions for sprintf-like list. (In that case the arg list can't be
+ * empty).
+ *
+ * Pink ('bright red') bullet for warnings, red bullet for errors.
+ * iwarn, ierr: intended for programmer (not user) errors.
+ *
+ * Caller must not call fish_util_cleanup() before calling any of the err
+ * functions -- we do it.
+ * Also all err functions exit with status of 1.
+ *
+ * iwarn()/piep:    <file>:<line> Something's wrong (internally).
+ * iwarn(msg):      <file>:<line> Internal warning: <msg>
+ * ierr()/die:      <file>:<line> Internal error.
+ * ierr(msg):       <file>:<line> Internal error: <msg>
+ *
+ * iwarn_perr():    <file>:<line> Something's wrong (internally) (<system error>).
+ * iwarn_perr(msg): <file>:<line> Internal warning: <msg> (<system error>).
+ * ierr_perr():     <file>:<line> Internal error (<system error>).
+ * ierr_perr(msg):  <file>:<line> Internal error: <msg> (<system error>).
+ *
+ * err, warn: intended for user errors and system errors.
+ *
+ * warn():          Something's wrong.
+ * warn(msg):       <msg>
+ * err():           Error.
+ * err(msg):        Error: <msg>
+ *
+ * warn_perr():     Something's wrong (<system error>).
+ * warn_perr(msg):  <msg> (<system error>).
+ * err_perr():      Error (<system error>).
+ * err_perr(msg):   Error: <msg> (<system error>).
+ *
+ * piep, pieprf, piepr0, etc.: (pronounced 'peep'). 
+ * Intended as easy-to-type way to warn (and possibly return false, return
+ * 0, etc.). Pipes through iwarn().
+ *
+ * die: synonym for ierr()
+ *
+ * The error functions will often leak their format argument variables. It's
+ * too difficult (and overkill) to try to programmatically free them before
+ * exit (they could be static).
+ *
  */
-#define iwarn_msg(x, ...) do {\
+
+#define iwarn_fmt(format, args...) do { \
+    iwarn(format, ##args); \
+} while(0);
+
+#define iwarn(msg...) do { \
+    _complain(__FILE__, __LINE__, false, false, #msg); \
+} while (0); 
+
+#define ierr_fmt(format, args...) do { \
+    ierr(format, ##args); \
+} while(0);
+
+#define ierr(msg...) do { \
+    _complain(__FILE__, __LINE__, true, false, #msg); \
+    _err(); \
+} while (0); 
+
+#define die do { \
+    ierr(); \
+} while (0); 
+
+#define iwarn_perr_fmt(format, args...) do { \
+    iwarn_perr(format, ##args); \
+} while(0);
+
+#define iwarn_perr(msg...) do { \
+    _complain(__FILE__, __LINE__, false, true, #msg); \
+} while (0); 
+
+#define ierr_perr_fmt(format, args...) do { \
+    ierr_perr(format, ##args); \
+} while(0);
+
+#define ierr_perr(msg...) do { \
+    _complain(__FILE__, __LINE__, true, true, #msg); \
+    _err(); \
+} while (0); 
+
+#define warn_fmt(format, args...) do { \
+    warn(format, ##args); \
+} while(0);
+
+#define warn(msg...) do { \
+    _complain("", 0, false, false, #msg); \
+} while (0); 
+
+#define err_fmt(format, args...) do { \
+    err(format, ##args); \
+} while(0);
+
+#define err(msg...) do { \
+    _complain("", 0, true, false, #msg); \
+    _err(); \
+} while (0); 
+
+#define warn_perr_fmt(format, args...) do { \
+    warn_perr(format, ##args); \
+} while(0);
+
+#define warn_perr(msg...) do { \
+    _complain("", 0, false, true, #msg); \
+} while (0); 
+
+#define err_perr_fmt(format, args...) do { \
+    err_perr(format, ##args); \
+} while(0);
+
+#define err_perr(msg...) do { \
+    _complain("", 0, true, true, #msg); \
+    _err(); \
+} while (0); 
+
+/*
     char *pref = f_get_warn_prefix(__FILE__, __LINE__); \
-    int len = strlen(pref); \
     char *warning = str(_FISH_WARN_LENGTH); \
     snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
     int len2 = strnlen(warning, _FISH_WARN_LENGTH);  \
-    char *internal = _empty(warning) ? "Something's wrong." : "Something's wrong: "; \
-    int len3 = strlen(internal); \
-    char *new = str(len + len2 + len3 + 1 + 1);   \
-    sprintf(new, "%s %s%s", pref, internal, warning);  \
-    warn(new); \
-    free(warning); \
-    free(new); \
-} while (0);
+    char *new = str(len + len2 + 1 + 1);   \
+    */
 
-/* Avoid compiler warnings about empty sprintf format.
+//char *internal = _empty(_error) ? "Internal error." : "Internal error: "; 
+/* This might leak the x string, but that's hard to avoid.
  */
-#define iwarn do {\
-    iwarn_msg("%s", ""); \
-} while (0); 
 
-#define ierr do { \
-    ierr_msg("%s", ""); \
-} while (0);
-
+/*
 #define ierr_msg(x, ...) do {\
     char *pref = f_get_warn_prefix(__FILE__, __LINE__); \
     int len = strlen(pref); \
@@ -69,88 +189,30 @@
     if (!_empty(x)) \
         snprintf(_error, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
     int len2 = strnlen(_error, _FISH_WARN_LENGTH);  \
-    char *internal = _empty(_error) ? "Internal error." : "Internal error: "; \
-    int len3 = strlen(internal); \
-    char *new = str(len + len2 + len3 + 1 + 1);   \
-    sprintf(new, "%s %s%s", pref, internal, _error);  \
+    char *new = str(len + len2 + 1 + 1);   \
+    sprintf(new, "%s %s", pref, _error);  \
     free(pref); \
     free(_error); \
     err(new); \
 } while (0);
+*/
+/* Note that do {} makes it impossible for this to be used in ternary
+ * conditional.
+ */
+
+
+/* e.g. <file>:<line>, with colors.
 
 #define warnpref f_get_warn_prefix(__FILE__, __LINE__)
 
-/* 
- * err, warn: For when it's not definitely internal. Could be user error or
- * something like file not found, for example.
- * Those are functions, not macros (cuz don't need file + line).
- */
-
-#define ierr_perr do { \
-    ierr_perr_msg("%s", ""); \
-} while(0);
-
-#define ierr_perr_msg(x, ...) do { \
-    char *warning = str(_FISH_WARN_LENGTH); \
-    if (!_empty(x)) \
-        snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
-    _warn_perr_msg("Error: ", warning); \
-    free(warning); \
-    exit(1); \
-} while(0);
-
-/* Only checks if first char is null.
+ * Only checks if first char is null.
  * No strlen.
  */
 
-#define _empty(x) (!strcmp(x, ""))
+#define _isemptystr(x) (!strncmp(x, "", 1))
 
-#define _warn_perr_msg(pref, x, ...) do { \
-    char *msg = str(_FISH_WARN_LENGTH); \
-    char *left_paren; \
-    char *right_paren; \
-    if (!_empty(x)) { \
-        snprintf(msg, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
-        left_paren = " ("; \
-        right_paren = ")"; \
-    } \
-    else { \
-        msg = left_paren = right_paren = ""; \
-    } \
-    warn("%s%s%s%s%s", pref, msg, left_paren, R_(perr()), right_paren ); \
-} while(0);
-
-#define iwarn_perr() do { \
-    warn_perr_msg("%s", ""); \
-} while (0);
-
-#define iwarn_perr_msg(x, ...) do { \
-    char *warning = str(_FISH_WARN_LENGTH); \
-    snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
-    _warn_perr_msg("Something's wrong: ", warning); \
-    free(warning); \
-} while (0);
-
-#define warn_perr_msg(x, ...) do { \
-    if (_empty(x)) \
-        warn("%s", perr()); \
-    else { \
-        char *warning = str(_FISH_WARN_LENGTH); \
-        snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
-        warn("%s (%s)", warning, perr()); \
-        free(warning); \
-    } \
-} while(0); 
-
-#define warn_perr do { \
-    warn_perr_msg(""); \
-} while(0);
-
-/* Synonym for iwarn.
- * piep = 'squeak'
- */
 #define piep do { \
-    iwarn; \
+    iwarn(); \
 } while (0); 
 
 #define pieprf do { \
@@ -198,12 +260,6 @@
     return 0; \
 } while (0) ;
 
-#include <stdbool.h> // not always necessary ??
-
-#include <sys/types.h>
-
-#include <stdio.h>
-
 /* int (32 bits).
  * Not all combinations make sense and some are redundant. 
  * Depends on function.
@@ -232,39 +288,43 @@
 #define F_READ_WRITE_NO_TRUNC   0x100000
 #define F_READ_WRITE_TRUNC      0x200000
 
+/* Static strings. 
+ * These names should not be used for any other variables.
+ */
+char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
+
+void fish_util_cleanup();
+
+/* Only necessary to restart after a cleanup.
+ */
+void fish_util_init();
+
+/* Functions without f_ prefix.
+ */
+
+void _();
 void spr(const char *format, ...);
-
 char *spr_(const char *format, int size, ...);
-
-void error_pref();
-void err(char *format, ...);
-
-//void warn(const char* s);
-void warn_pref();
-void warn(const char *format, ...);
 
 void say(const char *format, ...);
 void ask(const char *format, ...);
 void info(const char *format, ...);
-int sys(char *ret, const char *cmd);
 FILE *sysr(const char *cmd);
 FILE *sysw(const char *cmd);
-int sysx(const char *cmd);
-int sysxf(const char *orig, ...);
+/* Run command and read input until EOF.
+ */
+int sys(const char *cmd);
 int sysclose(FILE *f);
 int sysclose_f(FILE *f, const char *cmd, int flags);
 
-bool yes_no();
-bool yes_no_flags(int, int);
+FILE *safeopen(char *filespec);
+FILE *safeopen_f(char *filespec, int flags);
 
-void autoflush();
+const char *perr();
 
-bool f_sig(int signum, void *func);
-void f_benchmark();
-long int stoie(const char *s, int *err);
-long int stoi(const char *s);
+wchar_t *d8(char *s);
+
 char *str(int length);
-//char *strs(int length);
 
 char *R_(const char *s);
 char *BR_(const char *s);
@@ -292,12 +352,23 @@ void BCY(const char *s);
 void M(const char *s);
 void BM(const char *s);
 
-void disable_colors();
-int int_length(int i);
-const char *perr();
+/* Called by error macros in .h. 
+ * Means header is not enough to use error macros (.o needs to be linked as well).
+ */
+void _err();
 
-void sys_die(bool b);
-void verbose_cmds(bool b);
+/* Functions with f_
+ */
+void f_disable_colors();
+void f_sys_die(bool b);
+void f_verbose_cmds(bool b);
+
+bool f_yes_no();
+bool f_yes_no_flags(int, int);
+void f_autoflush();
+bool f_sig(int signum, void *func);
+void f_benchmark();
+int f_int_length(int i);
 
 bool f_socket_make_named(const char *filename, int *socket);
 bool f_socket_make_client(int socket, int *client_socket);
@@ -312,53 +383,42 @@ bool f_socket_write(int client_socket, ssize_t *num_written, const char *buf, si
 
 bool f_socket_close(int client_socket);
 
-bool socket_unix_message(const char *filename, const char *msg);
-bool socket_unix_message_f(const char *filename, const char *msg, char *response, int buf_length);
+bool f_socket_unix_message(const char *filename, const char *msg);
+bool f_socket_unix_message_f(const char *filename, const char *msg, char *response, int buf_length);
 
-char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
-void _();
-
-double time_hires();
+double f_time_hires();
 
 char *f_field(int width, char *string, int max_len);
 
-bool is_int_str(char *s);
-bool is_int_strn(char *s, int maxlen);
+bool f_is_int_str(char *s);
+bool f_is_int_strn(char *s, int maxlen);
 
-/* Not generally necessary, only to restart after a cleanup.
- */
-void fish_util_init();
-void fish_util_cleanup();
-void chop(char *s);
-void chop_w(wchar_t *s);
+void f_chop(char *s);
+void f_chop_w(wchar_t *s);
 
-char *comma(int n);
-char *reverse(char *s);
+//char *f_comma(int n);
 
 int f_get_static_str_length();
-
-wchar_t *d8(char *s);
 
 bool f_set_utf8();
 bool f_set_utf8_f(int flags);
 
-FILE *safeopen(char *filespec);
-FILE *safeopen_f(char *filespec, int flags);
-
-
 struct stat *f_stat_f(const char *file, int flags);
 struct stat *f_stat(const char *file);
 
-bool test_f(const char *file);
-bool test_d(const char *file);
+bool f_test_f(const char *file);
+bool f_test_d(const char *file);
 
 char *f_get_warn_prefix(char *file, int line);
 
 int f_get_max_color_length();
 int f_get_color_reset_length();
 
+void _complain(char *file, unsigned int line, bool iserr, bool perr, char *format, ...);
+
 /* guard */
 #endif
 /* guard */
+
 
 

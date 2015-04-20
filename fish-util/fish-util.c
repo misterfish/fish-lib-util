@@ -3,9 +3,10 @@
 // Be careful, truncated cmds bad. XX
 #define CMD_LENGTH 1000
 
-#define ERR_LENGTH 200 // should check biggest string in non-english xx
+/* For errors and warnings.
+ */
+#define COMPLAINT_LENGTH 500
 #define INFO_LENGTH 300
-#define WARN_LENGTH 500
 
 #define SOCKET_LENGTH_DEFAULT 100
 
@@ -14,8 +15,6 @@
 // length of (longest) color escape
 #define COLOR_LENGTH 5
 #define COLOR_LENGTH_RESET 4
-
-#define STRNLEN_REVERSE 20
 
 #define NUM_STATIC_STRINGS 8
 
@@ -146,14 +145,36 @@ static bool _verbose = true;
 /* Public functions.
  */
 
+/* init not necessary, unless you want to start over after having called
+ * _cleanup. (And even then it's not (currently) necessary).
+ */
+void fish_util_init() {
+    _static_str_init();
+    /* Merge these? XX
+     */
+    _static_str_initted = true;
+    _static_strings_freed = false;
+}
+
+void fish_util_cleanup() {
+    if (!_static_strings_freed) {
+        _static_strings_free();
+        _static_strings_freed = true;
+    }
+    if (mystat_initted) {
+        free(mystat);
+        mystat_initted = false;
+    }
+}
+
 /* Caller shouldn't free.
  */
 FILE *safeopen_f(char *filespec, int flags) {
     FILE *f = NULL;
 
     char *filename = NULL;
-    bool err = false;
-    bool die = ! (flags & F_NODIE);
+    bool is_err = false;
+    bool i_die = ! (flags & F_NODIE);
     bool quiet = flags & F_QUIET;
     bool utf8 = flags & F_UTF8;
     char *mode;
@@ -230,29 +251,29 @@ FILE *safeopen_f(char *filespec, int flags) {
         sprintf(mode_f, "%s,ccs=UTF-8", mode_f); // NO space after comma, before is ok
     }
 
-    if (test_d(filename)) {
+    if (f_test_d(filename)) {
         _();
         Y(filename);
-        iwarn("File %s is a directory (can't open)", _s);
-        err = true;
+        iwarn_fmt("File %s is a directory (can't open)", _s);
+        is_err = true;
     }
     else {
         f = fopen(filename, mode_f); // malloc
         if (!f) {
-            err = true;
+            is_err = true;
             if (!quiet) {
                 _();
                 Y(filename);
                 CY(mode);
-                iwarn("Couldn't open %s for %s: %s", _s, _t, perr());
+                iwarn_fmt("Couldn't open %s for %s: %s", _s, _t, perr());
             }
         }
     }
 
     free(mode_f);
 
-    if (err) {
-        if (die) {
+    if (is_err) {
+        if (i_die) {
             exit(1);
         }
         else {
@@ -297,12 +318,6 @@ void _static_strings_save_restore(int which) {
         memcpy(_w, savew, STATIC_STR_LENGTH);
 
         saved = false;
-
-        //free(saves);
-        //free(savet);
-        //free(saveu);
-        //free(savev);
-        //free(savew);
     }
 
 }
@@ -315,28 +330,19 @@ void _static_strings_save() {
     _static_strings_save_restore(0);
 }
 
-/* Old: caller should not free.
- * New: caller should free. No need to be global, either XX
+/* Caller should free.
  */
 char *f_get_warn_prefix(char *file, int line) {
     _static_strings_save();
-
-    if (!warn_prefix_size) {
-        warn_prefix_size = 10;
-        warn_prefix = str(warn_prefix_size);
-    }
 
     _();
     spr("%d", line);
     Y(_s);
 
     int len = strlen(file) + 1 + strlen(_t) + 1 + 1;
-    if (len > warn_prefix_size) {
-        warn_prefix_size = len;
-        warn_prefix = (char*) realloc((void*) warn_prefix, len * sizeof(char));
-        if (!warn_prefix) 
-            ierr_perr;
-    }
+    char *warn_prefix = malloc(len * sizeof(char));
+    if (!warn_prefix) 
+        ierr_perr();
 
     sprintf(warn_prefix, "%s:%s", file, _t);
 
@@ -346,7 +352,7 @@ char *f_get_warn_prefix(char *file, int line) {
 }
 
 
-bool test_f(const char *file) {
+bool f_test_f(const char *file) {
     struct stat *s = f_stat_f(file, F_QUIET);
     if (!s) return 0;
     int mode = s->st_mode;
@@ -355,7 +361,7 @@ bool test_f(const char *file) {
     return S_ISREG(mode);
 }
 
-bool test_d(const char *file) {
+bool f_test_d(const char *file) {
     struct stat *s = f_stat_f(file, F_QUIET);
     if (!s) return 0;
     int mode = s->st_mode;
@@ -390,7 +396,7 @@ struct stat *f_stat(const char *file) {
     return f_stat_f(file, 0);
 }
 
-void disable_colors() {
+void f_disable_colors() {
     _disable_colors = 1;
 }
 
@@ -647,78 +653,16 @@ void info(const char *format, ...) {
     free(new2);
 }
 
-void err(char *format, ...) {
-    char *new = str(ERR_LENGTH);
-    char *new2 = str(ERR_LENGTH + 1); // for checking truncations
-    va_list arglist, arglist_copy;
-    va_start( arglist, format );
-    va_copy(arglist_copy, arglist);
-    vsprintf(new, format, arglist );
-    vsnprintf( new2, ERR_LENGTH + 1, format, arglist_copy );
-    if (strncmp(new, new2, ERR_LENGTH)) { // no + 1 necessary
-        warn("Error string truncated.");
-    }
-    va_end( arglist );
-    char *errors = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + BULLET_LENGTH + 1 + 1 + 1);
-    char *c = R_(BULLET);
-    sprintf(errors, "%s %s\n", c, new);
-    fprintf(stderr, errors);
-    free(errors);
-    free(c);
-    free(new);
-    free(new2);
-    free(format);
-
+void _err() {
     fish_util_cleanup();
-
     exit(1);
 }
 
-/*
-// used in die() macros.
-void __die(const char *file, int line) {
-    // leaks, don't care.
-    // check for trunc ??
-    err(spr_("Unexpected error (%s:%s)", ERR_LENGTH, file, Y_(spr_("%d", 100, line))));
-}
-
-// used in die() macros.
-void __die_msg(const char *file, int line, const char *msg) {
-    // leaks, don't care.
-    // check for trunc ??
-    err(spr_("Unexpected error (%s:%s) -- %s", ERR_LENGTH, file, Y_(spr_("%d", 100, line)), msg));
-}
-*/
-
-void warn(const char *format, ...) {
-    char *new = str(WARN_LENGTH);
-    char *new2 = str(WARN_LENGTH + 1);
-    va_list arglist, arglist_copy;
-    va_start( arglist, format );
-    va_copy(arglist_copy, arglist);
-    vsnprintf(new, WARN_LENGTH, format, arglist );
-    vsnprintf( new2, WARN_LENGTH + 1, format, arglist_copy );
-    if (strncmp(new, new2, WARN_LENGTH)) { // no + 1 necessary
-        //warn("Warn string truncated.");
-        printf("warn: warn string truncated\n");
-    }
-    va_end( arglist );
-
-    char *warning = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + BULLET_LENGTH + 1 + 1 + 1);
-    char *c = BR_(BULLET);
-    sprintf(warning, "%s %s\n", c, new);
-    fprintf(stderr, warning);
-    free(warning);
-    free(c);
-    free(new);
-    free(new2);
-} 
-
-void sys_die(bool b) {
+void f_sys_die(bool b) {
     _die = b;
 }
 
-void verbose_cmds(bool b) {
+void f_verbose_cmds(bool b) {
     _verbose = b;
 }
 
@@ -732,8 +676,15 @@ FILE *sysr(const char *cmd) {
     if (f == NULL) {
         _();
         BR(cmd);
+        /* err_perr / warn_perr XX */
         spr("sysr: can't launch cmd (%s) for reading, fork or pipe failed (%s).", _s, perr(errno));
-        _die ? err(_t) : warn(_t);
+        "hello";
+        if (_die) {
+            err(_t);
+        }
+        else {
+            warn(_t);
+        }
     }
     return f;
 }
@@ -748,8 +699,14 @@ FILE *sysw(const char *cmd) {
     if (f == NULL) {
         _();
         BR(cmd);
-        spr("sysr: can't launch cmd (%s) for reading, fork or pipe failed (%s).", _s, perr(errno));
-        _die ? err(_t) : warn(_t);
+        /* err_perr / warn_perr XX */
+        spr("sysr: can't launch cmd (%s) for writing, fork or pipe failed (%s).", _s, perr(errno));
+        if (_die) {
+            err(_t);
+        }
+        else {
+            warn(_t);
+        }
     }
     return f;
 }
@@ -760,9 +717,8 @@ int sysclose_f(FILE *f, const char *cmd, int flags) {
     int i = pclose(f);
     bool quiet = flags && F_QUIET;
     if (i != 0) {
-        // Perr doesn't work here -- if the shell fails it should print
-        // something to stderr, and set non-zero exit, but it won't (can't)
-        // set errno.
+        /* Can't use errno here.
+         */
         _();
         if (cmd != NULL) {
             BR(cmd);
@@ -788,23 +744,12 @@ int sysclose(FILE *f) {
     return sysclose_f(f, NULL, 0);
 }
 
-// 0 means good
-int sysxf(const char *orig, ...) {
-    char *cmd = str(CMD_LENGTH);
-    va_list arglist;
-    va_start( arglist, orig );
-    vsnprintf( cmd, CMD_LENGTH, orig, arglist );
-    va_end( arglist );
-
-    int c = sysx(cmd);
-    free(cmd);
-    return c;
-}
-
-/* 0 means good
+/* Run command and read input until EOF.
+ * 0 means good.
+ * To not read the input, use sysr.
  * Don't call sysclose or free.
  */
-int sysx(const char *cmd) {
+int sys(const char *cmd) {
     FILE *f = sysr(cmd);
 
     int le = CMD_LENGTH;
@@ -818,18 +763,6 @@ int sysx(const char *cmd) {
         return ret;
     }
     else return 1;
-}
-
-/* Not implemented. XX
- */
-int sys(char *ret, const char *cmd) {
-    /*
-    char *buf = str(CMD_LENGTH);
-    while (fgets(buf, CMD_LENGTH, f) != NULL) {
-        printf(buf);
-    }
-    */
-    return -1;
 }
 
 bool f_sig(int signum, void *func) {
@@ -849,7 +782,7 @@ bool f_sig(int signum, void *func) {
     return true;
 }
 
-void autoflush() {
+void f_autoflush() {
     setvbuf(stdout, NULL, _IONBF, 0);
 }
 
@@ -876,7 +809,6 @@ void f_benchmark(int flag) {
         }
         float delta = delta_s + delta_us / 1e6;
         _();
-        //spr("%10.3f", 15, delta);
         spr("%10.3f", delta);
         G(_s);
         warn("Benchmark: %s s", _t);
@@ -886,34 +818,9 @@ void f_benchmark(int flag) {
     }
 }
 
-// errno doesn't always work.
-long int stoie(const char *s, int *err) {
-    char *endptr;
-    long int i = strtol(s, &endptr, 10);
-    // nothing converted
-    if (endptr == s) {
-        *err = 1;
-        return LONG_MIN;
-    }
-    else {
-        return i;
-    }
-}
-
-long int stoi(const char *s) {
-    int err = 0;
-    int i = stoie(s, &err);
-    if (err) {
-        // XX
-        warn("Can't convert string to int: %s", R_(s));
-        return LONG_MIN;
-    }
-    return i;
-}
-
-int int_length(int i) {
+int f_int_length(int i) {
     if (i == 0) return 1;
-    if (i < 0) return int_length(-1 * i);
+    if (i < 0) return f_int_length(-1 * i);
 
     return 1 + (int) log10(i);
 }
@@ -1000,17 +907,6 @@ bool f_socket_write(int client_socket, ssize_t *num_written, const char *buf, si
     if (num_written != NULL) 
         *num_written = rc;
 
-    /* Not necessary it seems.
-
-    if (!fsync(client_socket)) {
-        _();
-        spr("%d", client_socket);
-        Y(_s);
-        warn("Couldn't flush socket %s after write (%s)", _t, perr());
-        return false;
-    }
-    */
-
     return true;
 }
 
@@ -1028,8 +924,7 @@ bool f_socket_close(int client_socket) {
 /* strlen filename, strlen msg.
  * buf_length applies to both msg and response.
  */
-//bool socket_unix_message_f(const char *filename, const char *msg, char **response, int buf_length, int flags) {
-bool socket_unix_message_f(const char *filename, const char *msg, char *response, int buf_length) {
+bool f_socket_unix_message_f(const char *filename, const char *msg, char *response, int buf_length) {
     struct sockaddr_un serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
 
@@ -1095,11 +990,11 @@ bool socket_unix_message_f(const char *filename, const char *msg, char *response
     return true;
 }
 
-bool socket_unix_message(const char *filename, const char *msg) {
-    return socket_unix_message_f(filename, msg, NULL, SOCKET_LENGTH_DEFAULT + 1);
+bool f_socket_unix_message(const char *filename, const char *msg) {
+    return f_socket_unix_message_f(filename, msg, NULL, SOCKET_LENGTH_DEFAULT + 1);
 }
 
-double time_hires() {
+double f_time_hires() {
     struct timeb t;
     memset(&t, 0, sizeof(t));
     ftime(&t);
@@ -1111,7 +1006,7 @@ double time_hires() {
     return c;
 }
 
-bool yes_no_flags(int deflt, int flags) {
+bool f_yes_no_flags(int deflt, int flags) {
     bool infinite = ! (flags & F_NOINFINITE); // def true
 
     bool ret = false;
@@ -1127,7 +1022,7 @@ bool yes_no_flags(int deflt, int flags) {
         size_t n = 0;
 
         int rc = getline(&l, &n, stdin);
-        chop(l);
+        f_chop(l);
 
         if (rc == -1 || !strcmp(l, "\0")) { // no input
             if (deflt == F_DEFAULT_YES) {
@@ -1162,8 +1057,8 @@ bool yes_no_flags(int deflt, int flags) {
     return ret;
 }
 
-bool yes_no() {
-    return yes_no_flags(0, 0);
+bool f_yes_no() {
+    return f_yes_no_flags(0, 0);
 }
 
 /* Max string size helps catch non-null terminated strings.
@@ -1193,35 +1088,28 @@ char *f_field(int width, char *string, int max_len) {
 /* Not space-tolerant.
  * maxlen doesn't include \0, like strlen.
  */
-bool is_int_strn(char *s, int maxlen) {
+bool f_is_int_strn(char *s, int maxlen) {
     char *t = s;
     int len = 1;
     if (*t != '+' && *t != '-' && *t != '0' && !isdigit(*t)) 
         return false;
 
     if (maxlen <= 0) {
-        warn("is_int_strn: maxlen must be > 0 (got %d)", maxlen);
+        warn("f_is_int_strn: maxlen must be > 0 (got %d)", maxlen);
         return false;
     }
 
     while (++t, ++len, *t) {
-        //printf("len is %d, char is %c\n", len, *t);
         if (len > maxlen) break;
         if (!isdigit(*t)) return false;
-        //t++;
     }
     return true;
-    /*
-    errno = 0;
-    int a = strtol(s, NULL, 10); // man atoi
-    return errno ? false : true;
-    */
 }
 
 /* Not space-tolerant.
- * is_int_strn is safer.
+ * f_is_int_strn is safer.
  */
-bool is_int_str(char *s) {
+bool f_is_int_str(char *s) {
     char *t = s;
     if (*t != '+' && *t != '-' && *t != '0' && !isdigit(*t)) 
         return false;
@@ -1230,45 +1118,11 @@ bool is_int_str(char *s) {
         //t++;
     }
     return true;
-    /*
-    errno = 0;
-    int a = strtol(s, NULL, 10); // man atoi
-    return errno ? false : true;
-    */
-}
-
-/* Not generally necessary, unless you want to start over after having
- * called _cleanup. (And even then it's not currently necessary).
- */
-void fish_util_init() {
-    _static_str_init();
-    /* Merge these? XX
-     */
-    _static_str_initted = true;
-    _static_strings_freed = false;
-}
-
-void fish_util_cleanup() {
-    if (!_static_strings_freed) {
-        _static_strings_free();
-        _static_strings_freed = true;
-    }
-
-    /*
-    if (warn_prefix_size) {
-        free(warn_prefix);
-        warn_prefix_size = 0;
-    }
-    */
-    if (mystat_initted) {
-        free(mystat);
-        mystat_initted = false;
-    }
 }
 
 /* Caller has to assure \0-ok.
  */
-void chop(char *s) {
+void f_chop(char *s) {
     int i = strlen(s);
     if (i) s[i-1] = '\0';
     else piep;
@@ -1276,14 +1130,15 @@ void chop(char *s) {
 
 /* Caller has to assure \0-ok.
  */
-void chop_w(wchar_t *s) {
+void f_chop_w(wchar_t *s) {
     int i = wcslen(s);
     if (i) s[i-1] = L'\0';
     else piep;
 }
 
-char *comma(int n) {
-    int size = int_length(n);
+/* reverse XX
+char *f_comma(int n) {
+    int size = f_int_length(n);
     char *as_str = str(size + 1);
     int size2 = size * 2 * sizeof(char); // *2 is more than enough for commas
     char *ret_r = str(size2 + 1);
@@ -1310,21 +1165,7 @@ char *comma(int n) {
     free(ret_r);
     return ret;
 }
-
-char *reverse(char *s) {
-    int len = strnlen(s, STRNLEN_REVERSE);  // without \0. can still segfault.
-    if (len == STRNLEN_REVERSE) {
-        warn("reverse(): input too big");
-        return NULL;
-    }
-    char *r = str(len+1);
-    int i;
-    for (i = 0; i < len; i++) {
-        *(r+i) = *(s+len-i-1);
-    }
-    *(r+i) = '\0';
-    return r;
-}
+*/
 
 int f_get_static_str_length() {
     return STATIC_STR_LENGTH;
@@ -1426,6 +1267,189 @@ int f_get_color_reset_length() {
 
 /* Private functions.
  */
+
+/* not static, because needs to be called from header.
+ * and not a macro to not pollute the caller's namespace.
+ */
+void _complain(char *file, unsigned int line, bool iserr, bool do_perr, char *format, ...) {
+    char *the_str = str(COMPLAINT_LENGTH); 
+    char *the_format;
+
+    /* Annoying artifact of #arg in macros: extra set of "".
+     * Also, apparently it's necessary to duplicate the string first.
+     */
+    size_t t = strnlen(format, COMPLAINT_LENGTH);
+    char *format_dup = strndup(format, COMPLAINT_LENGTH);
+    if (format_dup[t-1] == '"') format_dup[t-1] = '\0';
+    if (format_dup[0] == '"') 
+        the_format = format_dup + 1;
+    else 
+        the_format = format_dup;
+    /* On overflow, snprintf is null-terminated, but rc is >= n.
+     */
+    va_list arglist, arglist_copy;
+    va_start(arglist, format);
+    int rc;
+    rc = vsnprintf(the_str, COMPLAINT_LENGTH, the_format, arglist);
+    if (rc >= COMPLAINT_LENGTH) {
+        // careful, recursive
+        warn("(warning string truncated).");
+        //warn("(error string truncated).");
+    }
+    va_end( arglist );
+
+
+    /* malloc
+     */
+    char *fl = NULL;
+    char *p = NULL; // perr
+    char *bullet = iserr ? R_(BULLET) : BR_(BULLET);
+
+    char *t1 = "";
+    char *t2 = "";
+    char *t3 = "";
+    char *t4 = "";
+    char *t5 = "";
+    char *t6 = "";
+    char *t7 = "";
+
+    /* see comments in fish-util.h for all the cases.
+     */
+    if (file && line) {
+        fl = f_get_warn_prefix(file, line);
+        t1 = fl;
+        t2 = " ";
+        if (iserr) {
+            if (do_perr) {
+                p = BR_((char*) perr()); // ditch const
+                // ierr_perr(msg)
+                if (*the_str) {
+                    t3 = "Internal error: ";
+                    t4 = the_str;
+                    t5 = " (";
+                    t6 = p;
+                    t7 = ").";
+                }
+                // ierr_perr()
+                else {
+                    t3 = "Internal error (";
+                    t4 = p;
+                    t5 = ").";
+                }
+            }
+            else {
+                // ierr(msg)
+                if (*the_str) {
+                    t3 = "Internal error: ";
+                    t4 = the_str;
+                }
+                // ierr() 
+                else {
+                    t3 = "Internal error.";
+                }
+            }
+        }
+        else {
+            if (do_perr) {
+                p = BR_((char*) perr()); // ditch const
+                // iwarn_perr(msg)
+                if (*the_str) {
+                    t3 = "Internal warning: ";
+                    t4 = the_str;
+                    t5 = " (";
+                    t6 = p;
+                    t7 = ").";
+                }
+                // iwarn_perr()
+                else {
+                    t3 = "Something's wrong (internally) (";
+                    t2 = p;
+                    t3 = ").";
+                }
+            }
+            else {
+                // iwarn(msg)
+                if (*the_str) {
+                    t3 = "Internal warning: ";
+                    t4 = the_str;
+                }
+                // iwarn()
+                else {
+                    t3 = "Something's wrong (internally).";
+                }
+            }
+        }
+    }
+    /* user/system warnings and errors
+     */
+    else {
+        if (iserr) {
+            if (do_perr) {
+                p = BR_((char*) perr()); // ditch const
+                // err_perr(msg)
+                if (*the_str) {
+                    t1 = "Error: ";
+                    t2 = the_str;
+                    t3 = " (";
+                    t4 = p;
+                    t5 = ").";
+                }
+                // err_perr()
+                else {
+                    t1 = "Error (";
+                    t2 = p;
+                    t3 = ").";
+                }
+            }
+            else {
+                // err(msg)
+                if (*the_str) {
+                    t1 = "Error: ";
+                    t2 = the_str;
+                }
+                // err()
+                else {
+                    t1 = "Error.";
+                }
+            }
+        }
+        else {
+            if (do_perr) {
+                p = BR_((char*) perr()); // ditch const
+                // warn_perr(msg)
+                if (*the_str) {
+                    t1 = the_str;
+                    t2 = " (";
+                    t3 = p;
+                    t4 = ").";
+                }
+                // warn_perr()
+                else {
+                    t1 = "Something's wrong (";
+                    t2 = p;
+                    t3 = ").";
+                }
+            }
+            else {
+                // warn(msg)
+                if (*the_str) {
+                    t1 = the_str;
+                }
+                // warn()
+                else {
+                    t1 = "Something's wrong.";
+                }
+            }
+        }
+    }
+
+    fprintf(stderr, "%s %s%s%s%s%s%s%s\n", bullet, t1, t2, t3, t4, t5, t6, t7);
+
+    if (fl) free(fl);
+    if (p) free(p);
+    free(format_dup);
+    free(bullet);
+}
 
 static char *_color(const char *s, int idx) {
     char *t = str(strlen(s) + 1 + 4 + 5);
