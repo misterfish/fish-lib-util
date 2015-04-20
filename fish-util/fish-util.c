@@ -5,7 +5,7 @@
 
 /* For errors and warnings.
  */
-#define COMPLAINT_LENGTH 500
+#define COMPLAINT_LENGTH F_COMPLAINT_LENGTH
 #define INFO_LENGTH 300
 
 #define SOCKET_LENGTH_DEFAULT 100
@@ -254,7 +254,7 @@ FILE *safeopen_f(char *filespec, int flags) {
     if (f_test_d(filename)) {
         _();
         Y(filename);
-        iwarn_fmt("File %s is a directory (can't open)", _s);
+        iwarn("File %s is a directory (can't open)", _s);
         is_err = true;
     }
     else {
@@ -265,7 +265,7 @@ FILE *safeopen_f(char *filespec, int flags) {
                 _();
                 Y(filename);
                 CY(mode);
-                iwarn_fmt("Couldn't open %s for %s: %s", _s, _t, perr());
+                iwarn("Couldn't open %s for %s: %s", _s, _t, perr());
             }
         }
     }
@@ -342,7 +342,7 @@ char *f_get_warn_prefix(char *file, int line) {
     int len = strlen(file) + 1 + strlen(_t) + 1 + 1;
     char *warn_prefix = malloc(len * sizeof(char));
     if (!warn_prefix) 
-        ierr_perr();
+        ierr_perr("");
 
     sprintf(warn_prefix, "%s:%s", file, _t);
 

@@ -37,6 +37,8 @@
  */
 #define _FISH_WARN_LENGTH 500
 
+#define F_COMPLAINT_LENGTH 500
+
 /* 
  * Some nice-to-look-at output and less tedious coding. 
  *
@@ -49,12 +51,8 @@
  * Becomes non-sense string if arg is a list (not handy).
  * Gets extra set of "" if arg is a string (annoying).
  *
- * msg... will only work if it's a single argument, not a list.
- * This is because C99 is strict about leaving the comma if the only
- * argument is variadic (for some reason).
- *
- * Use the _fmt versions for sprintf-like list. (In that case the arg list can't be
- * empty).
+ * C99 is really annoying about the trailing comma if the only variadaic argument is
+ * optional. So the empty versions need to be passed an empty string.
  *
  * Pink ('bright red') bullet for warnings, red bullet for errors.
  * iwarn, ierr: intended for programmer (not user) errors.
@@ -63,26 +61,26 @@
  * functions -- we do it.
  * Also all err functions exit with status of 1.
  *
- * iwarn()/piep:    <file>:<line> Something's wrong (internally).
+ * iwarn("")/piep:    <file>:<line> Something's wrong (internally).
  * iwarn(msg):      <file>:<line> Internal warning: <msg>
- * ierr()/die:      <file>:<line> Internal error.
+ * ierr("")/die:      <file>:<line> Internal error.
  * ierr(msg):       <file>:<line> Internal error: <msg>
  *
- * iwarn_perr():    <file>:<line> Something's wrong (internally) (<system error>).
+ * iwarn_perr(""):    <file>:<line> Something's wrong (internally) (<system error>).
  * iwarn_perr(msg): <file>:<line> Internal warning: <msg> (<system error>).
- * ierr_perr():     <file>:<line> Internal error (<system error>).
+ * ierr_perr(""):     <file>:<line> Internal error (<system error>).
  * ierr_perr(msg):  <file>:<line> Internal error: <msg> (<system error>).
  *
  * err, warn: intended for user errors and system errors.
  *
- * warn():          Something's wrong.
+ * warn(""):          Something's wrong.
  * warn(msg):       <msg>
- * err():           Error.
+ * err(""):           Error.
  * err(msg):        Error: <msg>
  *
- * warn_perr():     Something's wrong (<system error>).
+ * warn_perr(""):     Something's wrong (<system error>).
  * warn_perr(msg):  <msg> (<system error>).
- * err_perr():      Error (<system error>).
+ * err_perr(""):      Error (<system error>).
  * err_perr(msg):   Error: <msg> (<system error>).
  *
  * piep, pieprf, piepr0, etc.: (pronounced 'peep'). 
@@ -97,20 +95,12 @@
  *
  */
 
-#define iwarn_fmt(format, args...) do { \
-    iwarn(format, ##args); \
-} while(0);
-
 #define iwarn(msg...) do { \
-    _complain(__FILE__, __LINE__, false, false, #msg); \
+    _complain(__FILE__, __LINE__, false, false, msg); \
 } while (0); 
 
-#define ierr_fmt(format, args...) do { \
-    ierr(format, ##args); \
-} while(0);
-
 #define ierr(msg...) do { \
-    _complain(__FILE__, __LINE__, true, false, #msg); \
+    _complain(__FILE__, __LINE__, true, false, msg); \
     _err(); \
 } while (0); 
 
@@ -118,54 +108,30 @@
     ierr(); \
 } while (0); 
 
-#define iwarn_perr_fmt(format, args...) do { \
-    iwarn_perr(format, ##args); \
-} while(0);
-
 #define iwarn_perr(msg...) do { \
-    _complain(__FILE__, __LINE__, false, true, #msg); \
+    _complain(__FILE__, __LINE__, false, true, msg); \
 } while (0); 
-
-#define ierr_perr_fmt(format, args...) do { \
-    ierr_perr(format, ##args); \
-} while(0);
 
 #define ierr_perr(msg...) do { \
-    _complain(__FILE__, __LINE__, true, true, #msg); \
+    _complain(__FILE__, __LINE__, true, true, msg); \
     _err(); \
 } while (0); 
-
-#define warn_fmt(format, args...) do { \
-    warn(format, ##args); \
-} while(0);
 
 #define warn(msg...) do { \
-    _complain("", 0, false, false, #msg); \
+    _complain("", 0, false, false, msg); \
 } while (0); 
 
-#define err_fmt(format, args...) do { \
-    err(format, ##args); \
-} while(0);
-
 #define err(msg...) do { \
-    _complain("", 0, true, false, #msg); \
+    _complain("", 0, true, false, msg); \
     _err(); \
 } while (0); 
 
-#define warn_perr_fmt(format, args...) do { \
-    warn_perr(format, ##args); \
-} while(0);
-
 #define warn_perr(msg...) do { \
-    _complain("", 0, false, true, #msg); \
+    _complain("", 0, false, true, msg); \
 } while (0); 
 
-#define err_perr_fmt(format, args...) do { \
-    err_perr(format, ##args); \
-} while(0);
-
 #define err_perr(msg...) do { \
-    _complain("", 0, true, true, #msg); \
+    _complain("", 0, true, true, msg); \
     _err(); \
 } while (0); 
 
@@ -212,7 +178,7 @@
 #define _isemptystr(x) (!strncmp(x, "", 1))
 
 #define piep do { \
-    iwarn(); \
+    iwarn(""); \
 } while (0); 
 
 #define pieprf do { \
