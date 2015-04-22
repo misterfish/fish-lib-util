@@ -49,7 +49,7 @@ int match_full(char *target, char *regexp_s, char *ret[], int target_len /* with
     if (!re) {
         _();
         BR(regexp_s);
-        iwarn_fmt("Error compiling regex %s (%s)", _s, error);
+        iwarn("Error compiling regex %s (%s)", _s, error);
         return false;
     }
 
