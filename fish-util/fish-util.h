@@ -46,11 +46,6 @@
  * __VA_ARGS__ instead of args..., but there is still no good way to do the
  * ##__VA_ARGS__ trick to eat the comma without GCC.
  *
- * #args makes it into a string, commas and all. 
- * Becomes empty string if arg not given (handy).
- * Becomes non-sense string if arg is a list (not handy).
- * Gets extra set of "" if arg is a string (annoying).
- *
  * C99 is really annoying about the trailing comma if the only variadaic argument is
  * optional. So the empty versions need to be passed an empty string.
  *
@@ -59,6 +54,7 @@
  *
  * Caller must not call fish_util_cleanup() before calling any of the err
  * functions -- we do it.
+ *
  * Also all err functions exit with status of 1.
  *
  * iwarn("")/piep:    <file>:<line> Something's wrong (internally).
@@ -83,6 +79,8 @@
  * err_perr(""):      Error (<system error>).
  * err_perr(msg):   Error: <msg> (<system error>).
  *
+ * warn_aserr_xxx(...)  [to make it look like an error, but not die]
+ *
  * piep, pieprf, piepr0, etc.: (pronounced 'peep'). 
  * Intended as easy-to-type way to warn (and possibly return false, return
  * 0, etc.). Pipes through iwarn().
@@ -95,12 +93,16 @@
  *
  */
 
-#define iwarn(msg...) do { \
-    _complain(__FILE__, __LINE__, false, false, msg); \
+#define iwarn(format...) do { \
+    _complain(__FILE__, __LINE__, false, false, format); \
 } while (0); 
 
-#define ierr(msg...) do { \
-    _complain(__FILE__, __LINE__, true, false, msg); \
+#define iwarn_aserr(format...) do { \
+    _complain(__FILE__, __LINE__, true, false, format); \
+} while (0); 
+
+#define ierr(format...) do { \
+    _complain(__FILE__, __LINE__, true, false, format); \
     _err(); \
 } while (0); 
 
@@ -108,30 +110,42 @@
     ierr(); \
 } while (0); 
 
-#define iwarn_perr(msg...) do { \
-    _complain(__FILE__, __LINE__, false, true, msg); \
+#define iwarn_perr(format...) do { \
+    _complain(__FILE__, __LINE__, false, true, format); \
 } while (0); 
 
-#define ierr_perr(msg...) do { \
-    _complain(__FILE__, __LINE__, true, true, msg); \
+#define iwarn_aserr_perr(format...) do { \
+    _complain(__FILE__, __LINE__, true, true, format); \
+} while (0); 
+
+#define ierr_perr(format...) do { \
+    _complain(__FILE__, __LINE__, true, true, format); \
     _err(); \
 } while (0); 
 
-#define warn(msg...) do { \
-    _complain("", 0, false, false, msg); \
+#define warn(format...) do { \
+    _complain("", 0, false, false, format); \
 } while (0); 
 
-#define err(msg...) do { \
-    _complain("", 0, true, false, msg); \
+#define warn_aserr(format...) do { \
+    _complain("", 0, true, false, format); \
+} while (0); 
+
+#define err(format...) do { \
+    _complain("", 0, true, false, format); \
     _err(); \
 } while (0); 
 
-#define warn_perr(msg...) do { \
-    _complain("", 0, false, true, msg); \
+#define warn_perr(format...) do { \
+    _complain("", 0, false, true, format); \
 } while (0); 
 
-#define err_perr(msg...) do { \
-    _complain("", 0, true, true, msg); \
+#define warn_aserr_perr(format...) do { \
+    _complain("", 0, true, true, format); \
+} while (0); 
+
+#define err_perr(format...) do { \
+    _complain("", 0, true, true, format); \
     _err(); \
 } while (0); 
 

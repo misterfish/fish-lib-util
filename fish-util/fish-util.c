@@ -1272,32 +1272,20 @@ int f_get_color_reset_length() {
  * and not a macro to not pollute the caller's namespace.
  */
 void _complain(char *file, unsigned int line, bool iserr, bool do_perr, char *format, ...) {
-    char *the_str = str(COMPLAINT_LENGTH); 
-    char *the_format;
 
-    /* Annoying artifact of #arg in macros: extra set of "".
-     * Also, apparently it's necessary to duplicate the string first.
-     */
-    size_t t = strnlen(format, COMPLAINT_LENGTH);
-    char *format_dup = strndup(format, COMPLAINT_LENGTH);
-    if (format_dup[t-1] == '"') format_dup[t-1] = '\0';
-    if (format_dup[0] == '"') 
-        the_format = format_dup + 1;
-    else 
-        the_format = format_dup;
+    char *the_str = str(COMPLAINT_LENGTH); 
+
     /* On overflow, snprintf is null-terminated, but rc is >= n.
      */
-    va_list arglist, arglist_copy;
+    va_list arglist;
     va_start(arglist, format);
     int rc;
-    rc = vsnprintf(the_str, COMPLAINT_LENGTH, the_format, arglist);
+    rc = vsnprintf(the_str, COMPLAINT_LENGTH, format, arglist);
     if (rc >= COMPLAINT_LENGTH) {
         // careful, recursive
-        warn("(warning string truncated).");
-        //warn("(error string truncated).");
+        warn("(message string truncated).");
     }
-    va_end( arglist );
-
+    va_end(arglist);
 
     /* malloc
      */
@@ -1447,7 +1435,6 @@ void _complain(char *file, unsigned int line, bool iserr, bool do_perr, char *fo
 
     if (fl) free(fl);
     if (p) free(p);
-    free(format_dup);
     free(bullet);
 }
 
