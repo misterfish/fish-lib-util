@@ -1,3 +1,9 @@
+/*
+ * Author: Allen Haim <allen@netherrealm.net>, © 2015.
+ * Source: github.com/misterfish/fish-lib-util
+ * Licence: GPL 2.0
+ */
+
 #ifdef FISH_UTIL_H
 #else
 #define FISH_UTIL_H
@@ -28,7 +34,7 @@
     snprintf (dbg, DEBUG_LENGTH, x, ##__VA_ARGS__); \
     info("%s:debug:%s", pref, dbg); \
     free(dbg); \
-} while(0);
+} while (0)
 #else
 # define debug(...) {}
 #endif
@@ -95,91 +101,59 @@
 
 #define iwarn(format...) do { \
     _complain(__FILE__, __LINE__, false, false, format); \
-} while (0); 
+} while (0)
 
 #define iwarn_aserr(format...) do { \
     _complain(__FILE__, __LINE__, true, false, format); \
-} while (0); 
+} while (0)
 
 #define ierr(format...) do { \
     _complain(__FILE__, __LINE__, true, false, format); \
     _err(); \
-} while (0); 
+} while (0)
 
 #define die do { \
     ierr(); \
-} while (0); 
+} while (0)
 
 #define iwarn_perr(format...) do { \
     _complain(__FILE__, __LINE__, false, true, format); \
-} while (0); 
+} while (0)
 
 #define iwarn_aserr_perr(format...) do { \
     _complain(__FILE__, __LINE__, true, true, format); \
-} while (0); 
+} while (0)
 
 #define ierr_perr(format...) do { \
     _complain(__FILE__, __LINE__, true, true, format); \
     _err(); \
-} while (0); 
+} while (0)
 
 #define warn(format...) do { \
     _complain("", 0, false, false, format); \
-} while (0); 
+} while (0)
 
 #define warn_aserr(format...) do { \
     _complain("", 0, true, false, format); \
-} while (0); 
+} while (0)
 
 #define err(format...) do { \
     _complain("", 0, true, false, format); \
     _err(); \
-} while (0); 
+} while (0)
 
 #define warn_perr(format...) do { \
     _complain("", 0, false, true, format); \
-} while (0); 
+} while (0)
 
 #define warn_aserr_perr(format...) do { \
     _complain("", 0, true, true, format); \
-} while (0); 
+} while (0)
 
 #define err_perr(format...) do { \
     _complain("", 0, true, true, format); \
     _err(); \
-} while (0); 
-
-/*
-    char *pref = f_get_warn_prefix(__FILE__, __LINE__); \
-    char *warning = str(_FISH_WARN_LENGTH); \
-    snprintf(warning, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
-    int len2 = strnlen(warning, _FISH_WARN_LENGTH);  \
-    char *new = str(len + len2 + 1 + 1);   \
-    */
-
-//char *internal = _empty(_error) ? "Internal error." : "Internal error: "; 
-/* This might leak the x string, but that's hard to avoid.
- */
-
-/*
-#define ierr_msg(x, ...) do {\
-    char *pref = f_get_warn_prefix(__FILE__, __LINE__); \
-    int len = strlen(pref); \
-    char *_error = str(_FISH_WARN_LENGTH); \
-    if (!_empty(x)) \
-        snprintf(_error, _FISH_WARN_LENGTH, x, ##__VA_ARGS__); \
-    int len2 = strnlen(_error, _FISH_WARN_LENGTH);  \
-    char *new = str(len + len2 + 1 + 1);   \
-    sprintf(new, "%s %s", pref, _error);  \
-    free(pref); \
-    free(_error); \
-    err(new); \
-} while (0);
-*/
-/* Note that do {} makes it impossible for this to be used in ternary
- * conditional.
- */
-
+} while (0)
 
 /* e.g. <file>:<line>, with colors.
 
@@ -193,52 +167,52 @@
 
 #define piep do { \
     iwarn(""); \
-} while (0); 
+} while (0)
 
 #define pieprf do { \
     piep; \
     return false; \
-} while (0) ;
+} while (0) 
 
 #define pieprt do { \
     piep; \
     return true; \
-} while (0) ;
+} while (0)
 
 #define piepr1 do { \
     piep; \
     return 1; \
-} while (0) ;
+} while (0)
 
 #define piepr do { \
     piep; \
     return; \
-} while (0) ;
+} while (0)
 
 #define piepbr do { \
     piep; \
     break; \
-} while (0) ;
+} while (0)
 
 #define piepc do { \
     piep; \
     continue; \
-} while (0) ;
+} while (0)
 
 #define pieprnull do { \
     piep; \
     return NULL; \
-} while (0) ;
+} while (0)
 
 #define pieprneg1 do { \
     piep; \
     return -1; \
-} while (0) ;
+} while (0)
 
 #define piepr0 do { \
     piep; \
     return 0; \
-} while (0) ;
+} while (0)
 
 /* int (32 bits).
  * Not all combinations make sense and some are redundant. 
@@ -273,7 +247,11 @@
  */
 char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
 
+void *f_malloc(size_t s);
+
 void fish_util_cleanup();
+
+void f_signame(int signal, char **name, char **desc);
 
 /* Only necessary to restart after a cleanup.
  */

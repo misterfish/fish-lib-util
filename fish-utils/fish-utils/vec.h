@@ -1,3 +1,9 @@
+/*
+ * Author: Allen Haim <allen@netherrealm.net>, © 2015.
+ * Source: github.com/misterfish/fish-lib-util
+ * Licence: GPL 2.0
+ */
+
 #define VEC_DESTROY_DEEP 0x01
 
 typedef struct vec {

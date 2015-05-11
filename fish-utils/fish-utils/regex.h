@@ -1,4 +1,11 @@
+/*
+ * Author: Allen Haim <allen@netherrealm.net>, © 2015.
+ * Source: github.com/misterfish/fish-lib-util
+ * Licence: GPL 2.0
+ */
+
 #define F_REGEX_EXTENDED            0x01
+
 /* If set, caller of match functions should free all members of the return
  * array.
  */

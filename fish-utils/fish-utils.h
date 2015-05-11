@@ -1,3 +1,10 @@
+/*
+ * Author: Allen Haim <allen@netherrealm.net>, © 2015.
+ * Source: github.com/misterfish/fish-lib-util
+ * Licence: GPL 2.0
+ * Version: 0.4
+ */
+
 #ifndef __FISH_UTILS_H
 
 #define __FISH_UTILS_H 1

@@ -1,3 +1,9 @@
+/*
+ * Author: Allen Haim <allen@netherrealm.net>, © 2015.
+ * Source: github.com/misterfish/fish-lib-util
+ * Licence: GPL 2.0
+ */
+
 #define _GNU_SOURCE // here, not header, not exported
 
 // Be careful, truncated cmds bad. XX
@@ -17,6 +23,12 @@
 #define COLOR_LENGTH_RESET 4
 
 #define NUM_STATIC_STRINGS 8
+
+#define unknown_sig(signal) "Signal number " #signal // stringify
+#define signame_(n, d) do { \
+    if (name) *name = n; \
+    if (desc) *desc = d; \
+} while (0)
 
 #include <locale.h>
 
@@ -142,8 +154,20 @@ static int _disable_colors = 0;
 static bool _die = false;
 static bool _verbose = true;
 
+static void oom_fatal() {
+    fprintf(stderr, "Out of memory! (fish-util.c)");
+    _exit(1);
+}
+
 /* Public functions.
  */
+
+void *f_malloc(size_t s) {
+    void *ptr = malloc(s);
+    if (!ptr)
+        oom_fatal();
+    return ptr;
+}
 
 /* init not necessary, unless you want to start over after having called
  * _cleanup. (And even then it's not (currently) necessary).
@@ -258,13 +282,15 @@ FILE *safeopen_f(char *filespec, int flags) {
         is_err = true;
     }
     else {
-        f = fopen(filename, mode_f); // malloc
+        f = fopen(filename, mode_f);
         if (!f) {
+            int en = errno;
             is_err = true;
             if (!quiet) {
                 _();
                 Y(filename);
                 CY(mode);
+                errno = en;
                 iwarn("Couldn't open %s for %s: %s", _s, _t, perr());
             }
         }
@@ -295,11 +321,11 @@ void _static_strings_save_restore(int which) {
     static char *saves, *savet, *saveu, *savev, *savew;
     static bool saved = false;
     if (which == 0) {
-        saves = malloc(sizeof(char) * STATIC_STR_LENGTH);
-        savet = malloc(sizeof(char) * STATIC_STR_LENGTH);
-        saveu = malloc(sizeof(char) * STATIC_STR_LENGTH);
-        savev = malloc(sizeof(char) * STATIC_STR_LENGTH);
-        savew = malloc(sizeof(char) * STATIC_STR_LENGTH);
+        saves = f_malloc(sizeof(char) * STATIC_STR_LENGTH);
+        savet = f_malloc(sizeof(char) * STATIC_STR_LENGTH);
+        saveu = f_malloc(sizeof(char) * STATIC_STR_LENGTH);
+        savev = f_malloc(sizeof(char) * STATIC_STR_LENGTH);
+        savew = f_malloc(sizeof(char) * STATIC_STR_LENGTH);
         memcpy(saves, _s, STATIC_STR_LENGTH);
         memcpy(savet, _t, STATIC_STR_LENGTH);
         memcpy(saveu, _u, STATIC_STR_LENGTH);
@@ -340,9 +366,7 @@ char *f_get_warn_prefix(char *file, int line) {
     Y(_s);
 
     int len = strlen(file) + 1 + strlen(_t) + 1 + 1;
-    char *warn_prefix = malloc(len * sizeof(char));
-    if (!warn_prefix) 
-        ierr_perr("");
+    char *warn_prefix = f_malloc(len * sizeof(char));
 
     sprintf(warn_prefix, "%s:%s", file, _t);
 
@@ -374,7 +398,7 @@ bool f_test_d(const char *file) {
  */
 struct stat *f_stat_f(const char *file, int flags) {
     if (!mystat_initted) {
-        mystat = malloc(sizeof(*mystat));
+        mystat = f_malloc(sizeof(*mystat));
         mystat_initted = true;
     }
     memset(mystat, 0, sizeof(*mystat));
@@ -382,9 +406,11 @@ struct stat *f_stat_f(const char *file, int flags) {
     bool quiet = flags & F_QUIET;
 
     if (-1 == stat(file, mystat)) {
+        int en = errno;
         if (!quiet) {
             _();
             Y(file);
+            errno = en;
             warn("Couldn't stat %s: %s", _s, perr());
         }
         return NULL;
@@ -406,7 +432,7 @@ void f_disable_colors() {
  */
 char *str(int length) {
     assert(length > 0);
-    char *s = malloc(length * sizeof(char));
+    char *s = f_malloc(length * sizeof(char));
     memset(s, '\0', length);
     return s;
 }
@@ -586,7 +612,7 @@ const char *perr() {
 char *add_nl(const char *orig) {
     // not including null
     int len = strlen(orig);
-    char *new = malloc(sizeof(char) * (len + 2));
+    char *new = f_malloc(sizeof(char) * (len + 2));
     memset(new, '\0', len + 2);
     // no null
     strncpy(new, orig, len);
@@ -668,76 +694,126 @@ void f_verbose_cmds(bool b) {
 
 /* Non-null FILE means fork or pipe succeeded, but command could still fail
  * (e.g. command not found).
- * Caller should check for NULL, and call sysclose to free (not free())
+ * Caller should check for NULL, and if non-null, call sysclose to finish
+ * (not free()).
  */
 FILE *sysr(const char *cmd) {
     if (_verbose) _sys_say(cmd);
     FILE *f = popen(cmd, "r");
-    if (f == NULL) {
+    errno = -1;
+    if (!f) {
+        /* memory allocation failed (errno doesn't get set).
+         */
+        if (errno == -1)
+            oom_fatal();
+        int e = errno;
         _();
         BR(cmd);
-        /* err_perr / warn_perr XX */
-        spr("sysr: can't launch cmd (%s) for reading, fork or pipe failed (%s).", _s, perr(errno));
-        "hello";
-        if (_die) {
-            err(_t);
-        }
-        else {
-            warn(_t);
-        }
+        spr("Can't launch cmd (%s) for reading, fork or pipe failed.", _s);
+        errno = e;
+        if (_die) 
+            err_perr(_t);
+        else 
+            warn_perr(_t);
     }
     return f;
 }
 
 /* Non-null FILE means fork or pipe succeeded, but command could still fail
  * (e.g. command not found).
- * Caller should call sysclose afterwards (and not free())
+ * Caller should check for NULL, and if non-null, call sysclose to finish
+ * (not free()).
  */
 FILE *sysw(const char *cmd) {
     if (_verbose) _sys_say(cmd);
+    errno = -1;
     FILE *f = popen(cmd, "w");
     if (f == NULL) {
+        /* memory allocation failed (errno doesn't get set).
+         */
+        if (errno == -1)
+            oom_fatal();
+        int e = errno;
         _();
         BR(cmd);
-        /* err_perr / warn_perr XX */
-        spr("sysr: can't launch cmd (%s) for writing, fork or pipe failed (%s).", _s, perr(errno));
-        if (_die) {
-            err(_t);
-        }
-        else {
-            warn(_t);
-        }
+        spr("Can't launch cmd (%s) for reading, fork or pipe failed.", _s);
+        errno = e;
+        if (_die) 
+            err_perr(_t);
+        else 
+            warn_perr(_t);
     }
     return f;
 }
 
-/* 0 means good.
+/* 0 means good, -1 means wait or another sys call failed, > 0 is a non-zero
+ * exit from the command.
+ * The cmd arg is optional -- with it we can make a nicer error message.
+ *
+ * This will print an error message if a popen'ed command is closed while
+ * there's still data in the buffer. Use flag F_QUIET to silence this.
  */
 int sysclose_f(FILE *f, const char *cmd, int flags) {
-    int i = pclose(f);
     bool quiet = flags && F_QUIET;
-    if (i != 0) {
-        /* Can't use errno here.
-         */
+    int status = pclose(f);
+    if (status) {
+        int en = errno;
         _();
-        if (cmd != NULL) {
+        if (cmd && *cmd != '\0') {
             BR(cmd);
-            spr(" %s", _s);
+            spr(" «%s»", _s);
         }
         else {
             spr("");
             spr("");
         }
-        spr("Error with cmd%s.", _t);
-        if (_die) {
-            err(_u);
+        /* On linux and most unices, the 7 least significant bits contain
+         * the signal, and the 8th tells us if we core dumped, if it was
+         * killed by a signal.
+         * We will assume we are on one of those systems.
+         */
+        int signal = status & 0x7F;
+        int core_dumped = status & 0x80;
+        if (signal) {
+            char *name;
+            f_signame(signal, &name, NULL);
+            CY(name);
+            spr(" «got signal %s»", _u);
         }
         else {
-            if (!quiet) 
-                warn(_u);
+            spr("");
+            spr("");
         }
+        if (core_dumped) {
+            M("core dumped");
+            spr(" «%s»", _w);
+        }
+        else {
+            spr("");
+            spr("");
+        }
+        
+        status >>= 8;
+        spr("%d", status);
+        Y(_y);
+        // XX
+        char *msg = spr_("Error closing cmd%s «exit status %s»%s%s.", 300, _t, _z, _v, _x);
+        if (status == -1) {
+            errno = en;
+            if (_die) 
+                err_perr(msg);
+            else if (!quiet) 
+                warn_perr(msg);
+        }
+        else {
+            if (_die) 
+                err(msg);
+            else if (!quiet) 
+                warn(msg);
+        }
+        free(msg);
     }
-    return i;
+    return status;
 }
 
 int sysclose(FILE *f) {
@@ -745,11 +821,12 @@ int sysclose(FILE *f) {
 }
 
 /* Run command and read input until EOF.
- * 0 means good.
+ * Returns the cmd status, or 1 if the command failed to open.
  * To not read the input, use sysr.
- * Don't call sysclose or free.
  */
 int sys(const char *cmd) {
+    /* Don't free.
+     */
     FILE *f = sysr(cmd);
 
     int le = CMD_LENGTH;
@@ -758,7 +835,7 @@ int sys(const char *cmd) {
     }
     free(buf);
 
-    if (f != NULL) {
+    if (f) {
         int ret = sysclose_f(f, cmd, 0);
         return ret;
     }
@@ -772,7 +849,9 @@ bool f_sig(int signum, void *func) {
     action.sa_handler = func;
     int rc = sigaction(signum, &action, NULL);
     if (rc) {
+        int en = errno;
         _();
+        errno = en;
         spr("%s", perr());
         spr("%d", signum);
         R(_t);
@@ -791,7 +870,7 @@ void f_benchmark(int flag) {
     static int sec;
     static int usec;
 
-    struct timeval *tv = malloc(sizeof *tv); 
+    struct timeval *tv = f_malloc(sizeof *tv); 
 
     if (flag == 0) {
         gettimeofday(tv, NULL);
@@ -832,8 +911,10 @@ bool f_socket_make_named (const char *filename, int *socknum) {
     // 0 for protocol
     int sock = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (sock < 0) {
+        int en = errno;
         _();
         Y(filename);
+        errno = en;
         warn("Can't make socket %s: %s", _s, perr());
         return false;
     }
@@ -852,8 +933,10 @@ bool f_socket_make_named (const char *filename, int *socknum) {
     size = (offsetof (struct sockaddr_un, sun_path) + strlen (name.sun_path) + 1);
   
     if (bind (sock, (struct sockaddr *) &name, size) < 0) {
+        int en = errno;
         _();
         Y(filename);
+        errno = en;
         warn("Can't bind socket %s (%s)", _s, perr());
         return false;
     }
@@ -869,9 +952,11 @@ bool f_socket_make_client(int socket, int *client_socket) {
     socklen_t t = sizeof(a);
     int cs = accept(socket, &a, &t);
     if (cs == -1) {
+        int en = errno;
         _();
         spr("%d", socket);
         Y(_s);
+        errno = en;
         warn("Couldn't make client socket for socknum %s (%s)", _t, perr());
         return false;
     }
@@ -883,9 +968,11 @@ bool f_socket_make_client(int socket, int *client_socket) {
 bool f_socket_read(int client_socket, ssize_t *num_read, char *buf, size_t max_length) {
     ssize_t rc = recv(client_socket, buf, max_length, 0); // blocking
     if (rc == -1) {
+        int en = errno;
         _();
         spr("%d", client_socket);
         Y(_s);
+        errno = en;
         warn("Couldn't read from socket %s (%s)", _t, perr());
         return false;
     }
@@ -897,9 +984,11 @@ bool f_socket_read(int client_socket, ssize_t *num_read, char *buf, size_t max_l
 bool f_socket_write(int client_socket, ssize_t *num_written, const char *buf, size_t len) {
     ssize_t rc = write(client_socket, buf, len);
     if (rc == -1) {
+        int en = errno;
         _();
         spr("%d", client_socket);
         Y(_s);
+        errno = en;
         warn("Couldn't write to socket %s (%s)", _t, perr());
         return false;
     }
@@ -912,9 +1001,11 @@ bool f_socket_write(int client_socket, ssize_t *num_written, const char *buf, si
 
 bool f_socket_close(int client_socket) {
     if (close(client_socket)) {
+        int en = errno;
         _();
         spr("%d", client_socket);
         Y(_s);
+        errno = en;
         warn("Couldn't close client socket %s (%s)", _t, perr());
         return false;
     }
@@ -1240,7 +1331,7 @@ wchar_t *d8(char *s) {
     char *_line = str(len + 1);
     strcpy(_line, s);
     const char *line = _line; // doesn't need free
-    wchar_t *line8 = malloc(sizeof(wchar_t) * (len+1)); // overshoot
+    wchar_t *line8 = f_malloc(sizeof(wchar_t) * (len+1)); // overshoot
     memset(line8, L'\0', sizeof(wchar_t) * (len+1)); // valgrind complains without this, maybe ok though without it
     mbstate_t ps = {0};
     size_t num = mbsrtowcs(line8, &line, len /* at most this many wides are written, excl L\0 */, &ps); // consumes line but s untouched
@@ -1265,6 +1356,154 @@ int f_get_color_reset_length() {
     return COLOR_LENGTH_RESET;
 }
 
+/* Don't free.
+ */
+void f_signame(int signal, char **name, char **desc) {
+    switch(signal) {
+        case SIGHUP:
+            signame_("HUP", "Hangup detected on controlling terminal or death of controlling process");
+            break;
+        case SIGINT:
+            signame_("INT", "Interrupt from keyboard");
+            break;
+        case SIGQUIT:
+            signame_("QUIT", "Quit from keyboard");
+            break;
+        case SIGILL:
+            signame_("ILL", "Illegal Instruction");
+            break;
+        case SIGABRT:
+            signame_("ABRT", "Abort signal from abort(3)");
+            break;
+        case SIGFPE:
+            signame_("FPE", "Floating point exception");
+            break;
+        case SIGKILL:
+            signame_("KILL", "Kill signal");
+            break;
+        case SIGSEGV:
+            /* signame_("SEGV", "Invalid memory reference");
+             * better known as:
+             */
+            signame_("SEGV", "Segmentation fault");
+            break;
+        case SIGPIPE:
+            signame_("PIPE", "Broken pipe: write to pipe with no readers");
+            break; 
+        case SIGALRM:
+            signame_("ALRM", "Timer signal from alarm(2)");
+            break;
+        case SIGTERM:
+            signame_("TERM", "Termination signal");
+            break;
+        case SIGUSR1:
+            signame_("USR1", "User-defined signal 1");
+            break;
+        case SIGUSR2:
+            signame_("USR2", "User-defined signal 2");
+            break; 
+        case SIGCHLD:
+            signame_("CHLD", "Child stopped or terminated");
+            break;
+        case SIGCONT:
+            signame_("CONT", "Continue if stopped");
+            break;
+        case SIGSTOP:
+            signame_("STOP", "Stop process");
+            break;
+        case SIGTSTP:
+            signame_("TSTP", "Stop typed at terminal");
+            break; 
+        case SIGTTIN:
+            signame_("TTIN", "Terminal input for background process");
+            break;
+        case SIGTTOU:
+            signame_("TTOU", "Terminal output for background process");
+            break;
+        case SIGBUS:
+            signame_("BUS", "Bus error (bad memory access)");
+            break; 
+            /* synonym for SIGIO
+        case SIGPOLL:
+            signame_("POLL", "Pollable event (Sys V).");
+            break; 
+            */
+        case SIGPROF:
+            signame_("PROF", "Profiling timer expired");
+            break;
+        case SIGSYS:
+            signame_("SYS", "Bad argument to routine");
+            break;
+        case SIGTRAP:
+            signame_("TRAP", "Trace/breakpoint trap");
+            break;
+        case SIGURG:
+            signame_("URG", "Urgent condition on socket");
+            break;
+        case SIGVTALRM:
+            signame_("VTALRM", "Virtual alarm clock");
+            break;
+        case SIGXCPU:
+            signame_("XCPU", "CPU time limit exceeded");
+            break;
+        case SIGXFSZ:
+            signame_("XFSZ", "File size limit exceeded");
+            break;
+            /* synonym for SIGABRT
+        case SIGIOT:
+            signame_("IOT", "IOT trap");
+            break; 
+            */
+/* these ifdefs won't work if they're not macros but normal ints. 
+ * works on linux in any case.
+ */
+#ifdef SIGEMT
+        case SIGEMT:
+            signame_("EMT", "");
+            break; 
+#endif
+#ifdef SIGSTKFLT
+        case SIGSTKFLT:
+            signame_("STKFLT", "Stack fault on coprocessor (unused)");
+            break;
+#endif
+        case SIGIO:
+            signame_("IO", "I/O now possible");
+            break;
+            /* synonym for SIGCHLD 
+        case SIGCLD:
+            signame_("CLD", "Child stopped or terminated");
+            break; 
+            */
+        case SIGPWR:
+            signame_("PWR", "Power failure");
+            break;
+            /* synonym for SIGPWR
+        case SIGINFO:
+            signame_("INFO", "Power failure");
+            break;
+            */
+#ifdef SIGLOST
+        case SIGLOST:
+            signame_("LOST", "File lock lost");
+            break;
+#endif
+        case SIGWINCH:
+            signame_("WINCH", "Window resize signal");
+            break;
+            /* synonym for SIGSYS
+        case SIGUNUSED:
+            signame_("UNUSED", "Bad argument to routine");
+            break;
+            */
+        default:
+            if (signal >= SIGRTMIN && signal <= SIGRTMAX) 
+                signame_("RTMIN+n", "Real-time signal");
+            else
+                signame_(unknown_sig(signal), "Unknown signal");
+    }
+}
+
 /* Private functions.
  */
 
@@ -1272,6 +1511,8 @@ int f_get_color_reset_length() {
  * and not a macro to not pollute the caller's namespace.
  */
 void _complain(char *file, unsigned int line, bool iserr, bool do_perr, char *format, ...) {
+
+    int en = errno;
 
     char *the_str = str(COMPLAINT_LENGTH); 
 
@@ -1309,6 +1550,7 @@ void _complain(char *file, unsigned int line, bool iserr, bool do_perr, char *fo
         t2 = " ";
         if (iserr) {
             if (do_perr) {
+                errno = en;
                 p = BR_((char*) perr()); // ditch const
                 // ierr_perr(msg)
                 if (*the_str) {
@@ -1339,6 +1581,7 @@ void _complain(char *file, unsigned int line, bool iserr, bool do_perr, char *fo
         }
         else {
             if (do_perr) {
+                errno = en;
                 p = BR_((char*) perr()); // ditch const
                 // iwarn_perr(msg)
                 if (*the_str) {
@@ -1373,6 +1616,7 @@ void _complain(char *file, unsigned int line, bool iserr, bool do_perr, char *fo
     else {
         if (iserr) {
             if (do_perr) {
+                errno = en;
                 p = BR_((char*) perr()); // ditch const
                 // err_perr(msg)
                 if (*the_str) {
@@ -1403,6 +1647,7 @@ void _complain(char *file, unsigned int line, bool iserr, bool do_perr, char *fo
         }
         else {
             if (do_perr) {
+                errno = en;
                 p = BR_((char*) perr()); // ditch const
                 // warn_perr(msg)
                 if (*the_str) {
@@ -1458,7 +1703,7 @@ static void _static_str_init() {
     _static_strs[7] = &_z;
 
     for (int i = 0; i < NUM_STATIC_STRINGS; i++) {
-        *_static_strs[i] = malloc(sizeof(char) * STATIC_STR_LENGTH);
+        *_static_strs[i] = f_malloc(sizeof(char) * STATIC_STR_LENGTH);
     }
 
 }

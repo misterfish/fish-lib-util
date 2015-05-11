@@ -1,4 +1,10 @@
 /*
+ * Author: Allen Haim <allen@netherrealm.net>, © 2015.
+ * Source: github.com/misterfish/fish-lib-util
+ * Licence: GPL 2.0
+ */
+
+/*
  * gcc fish-util.o test.c -lm -o test 
  */
 #include "fish-util.h"

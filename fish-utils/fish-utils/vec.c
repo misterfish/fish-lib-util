@@ -1,12 +1,16 @@
-#define _GNU_SOURCE // here, not header, so not exported
+/*
+ * Author: Allen Haim <allen@netherrealm.net>, © 2015.
+ * Source: github.com/misterfish/fish-lib-util
+ * Licence: GPL 2.0
+ */
 
-//#define DEBUG
+#define _GNU_SOURCE 
 
 #include "../fish-utils.h"
 
 #define mlc(a) malloc(sizeof(a));
 
-#define VEC_CAP 1 // to see how it works
+#define VEC_CAP 10
 
 vec *vec_new() {
     vec *v = mlc(vec)
@@ -96,7 +100,6 @@ bool vec_destroy(vec *v) {
     return vec_destroy_flags(v, 0);
 }
 
-// can't fail really
 bool vec_clear(vec *v) {
     for (int i = 0; i < v->n; i++) {
         void *ptr = v->_data[i];
