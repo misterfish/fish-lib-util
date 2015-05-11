@@ -821,25 +821,32 @@ int sysclose(FILE *f) {
 }
 
 /* Run command and read input until EOF.
- * Returns the cmd status, or 1 if the command failed to open.
+ * Returns the cmd status, or -1 on failure.
  * To not read the input, use sysr.
  */
 int sys(const char *cmd) {
-    /* Don't free.
-     */
     FILE *f = sysr(cmd);
+    /* Leave complaining to sysr.
+     */
+    if (!f)
+        return -1;
 
-    int le = CMD_LENGTH;
-    char *buf = str(le);
-    while (fgets(buf, le, f) != NULL) {
+    int rc;
+    char buf[100];
+    errno = -1;
+    while (fgets(buf, 100, f)) {
     }
-    free(buf);
+    if (ferror(f)) {
+        /* Not clear whether fgets is required to set errno.
+         */
+        if (errno != -1) 
+            warn_perr("Interrupted read from command");
+        else 
+            warn("Interrupted read from command");
+        return -1;
+    }
 
-    if (f) {
-        int ret = sysclose_f(f, cmd, 0);
-        return ret;
-    }
-    else return 1;
+    return sysclose_f(f, cmd, 0);
 }
 
 bool f_sig(int signum, void *func) {
