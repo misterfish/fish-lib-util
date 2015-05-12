@@ -8,8 +8,9 @@ URL: http://github.com/misterfish/fish-lib-util
 Requires: libpcre >= 8.35
 Requires.private: 
 Conflicts: 
+# -lm ?
 Libs: -L${maindir} -lfish-utils -lfish-util 
 # --static
-Libs.private: -lm ${maindir}/fish-utils.o
+Libs.private: 
 Cflags: -I${maindir}
 

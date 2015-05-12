@@ -12,14 +12,7 @@ inc = -I$(fish_util_dir)
 src = fish-utils/vec.c fish-utils/regex.c fish-utils/main.c fish-utils.h
 objs = fish-utils/vec.o fish-utils/regex.o fish-utils/main.o
 
-all: .init $(objs) libfish-utils.so fish-utils.o
-
-.init: $(src) 
-	@ # src_dep (.c and .h files) so people including us know when to remake us.
-	@ # ld so people including us link what we need (e.g. -lm)
-	mkdir -p .obj/fish-utils.o 
-	echo > .obj/fish-utils.o/src_dep $(src)
-	echo > .obj/fish-utils.o/ld $(lib)
+all: $(objs) libfish-utils.so fish-utils.o
 
 libfish-utils.so: fish-utils.o
 	$(cc) $(shared) $(objs) \
@@ -33,6 +26,9 @@ fish-utils.o: $(src) $(objs)
 	@ # combine mulitiple .o into a total .o file.
 	ld -r $(objs) -o fish-utils.o
 
+test: 
+	# xxx
+	
 install: 
 	mkdir -p $(install_inc_dir)/fish-utils/fish-utils
 	cp fish-utils.h $(install_inc_dir)/fish-utils
@@ -47,7 +43,6 @@ clean:
 	rm -f *.so
 
 mrproper: clean
-	rm -f .init
 	rm -rf .obj
 
 .PHONY: all install clean mrproper

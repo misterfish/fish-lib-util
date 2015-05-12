@@ -8,7 +8,7 @@ URL: http://github.com/misterfish/fish-lib-util
 Requires: 
 Requires.private: 
 Conflicts: 
-Libs: -L${maindir} -lfish-util
+Libs: 
 # --static
 Libs.private: ${maindir}/fish-util.o
 Cflags: -I${maindir}

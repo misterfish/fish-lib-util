@@ -1,0 +1,48 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/functions
+
+USAGE="Usage: $0"
+
+arg="$1"
+
+if [ "$arg" = -h ]; then
+    warn $USAGE
+    exit 0
+fi
+
+chd "$(dirname "$0")"
+
+# Make local .pc files.
+make_pkg_config() {
+    pkg_config_in="$1"
+    pkg_config="$2"
+
+    echo    >  "$pkg_config" -n ''
+    printf  >> "$pkg_config" "# This is a generated file (see configure)\n"
+    echo    >> "$pkg_config" ''
+    printf  >> "$pkg_config" 'topdir = "%s/../.."\n' "$(pwd -P)"
+    echo    >> "$pkg_config" ''
+    cat     >> "$pkg_config" "$pkg_config_in" 
+
+    # Hint: use it like this in your Makefile:
+    # PKG_CONFIG_PATH=<root-dir>:/usr/lib/pkgconfig:/usr/share/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/share/pkgconfig pkg-config {fish-util|fish-utils} [flags]
+}
+
+chd pkg-config/static
+make_pkg_config fish-util.pc.in fish-util.pc
+make_pkg_config fish-utils.pc.in fish-utils.pc
+chd ../..
+chd pkg-config/dynamic
+make_pkg_config fish-util.pc.in fish-util.pc
+make_pkg_config fish-utils.pc.in fish-utils.pc
+chd ../..
+
+chd fish-util
+cmd make .init
+chd ..
+chd fish-utils
+cmd make .init
+chd ..
+
+cmd touch .init

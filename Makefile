@@ -1,41 +1,49 @@
 fishutil_dir 	:= fish-util
 fishutils_dir 	:= fish-utils
 
+pkgconfig	= pkg-config/static/fish-util.pc \
+                  pkg-config/static/fish-utils.pc \
+                  pkg-config/dynamic/fish-util.pc \
+                  pkg-config/dynamic/fish-utils.pc 
+
+pkgconfig_ins	= pkg-config/static/fish-util.pc.in \
+                  pkg-config/static/fish-utils.pc.in \
+                  pkg-config/dynamic/fish-util.pc.in \
+                  pkg-config/dynamic/fish-utils.pc.in 
+
 # - - -
 
 cc = gcc -std=c99 -fPIC
 
-# sets <module>_inc, <module>_obj, <module>_src_dep, <module>_ld, and <module>_all.
-include $(fishutil_dir)/fishutil.mk
-include $(fishutils_dir)/fishutils.mk
-VPATH=$(fishutil_dir):$(fishutils_dir)
+all: init fishutil_obj fishutils_obj
 
-all: check-init $(fishutil_obj) $(fishutils_obj)
+$(pkgconfig): $(pkgconfig_ins)
+	scripts/gen-pkg-config
 
-check-init: 
-	@ if [ ! -e .init ]; then echo "\nfish-util: Need to run './configure' first (pwd=$(shell pwd)).\n"; exit 1; fi
+init: $(pkgconfig)
 
-test: test.c
-	$(cc) test.c $(fishutil_all) $(fishutils_all) -o test
-	./test
+test: 
+	make -C $(fishutil_dir) test
+	make -C $(fishutils_dir) test
 
-$(fishutil_obj): $(fishutil_src_dep)
+fishutil_obj: 
 	make -C $(fishutil_dir)
 
-$(fishutils_obj): $(fishutils_src_dep)
+fishutils_obj: 
 	make -C $(fishutils_dir)
 
 install: 
-	sh -c 'cd fish-util; make install'
-	sh -c 'cd fish-utils; make install'
+	sh -c 'cd $(fishutil_dir); make install'
+	sh -c 'cd $(fishutils_dir); make install'
 
 clean:
 	cd $(fishutil_dir) && make clean
 	cd $(fishutils_dir) && make clean
+	cd pkg-config/static && rm -f *.pc
+	cd pkg-config/dynamic && rm -f *.pc
 
 mrproper: clean
 	cd $(fishutil_dir) && make mrproper
 	cd $(fishutils_dir) && make mrproper
-	rm -f .init
 
-.PHONY: all install clean test check-init mrproper
+.PHONY: all install clean test mrproper

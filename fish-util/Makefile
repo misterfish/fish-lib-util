@@ -13,15 +13,10 @@ all = $(lib) $(inc)
 
 src = fish-util.c fish-util.h
 
-all: .init libfish-util.so fish-util.o
+all: libfish-util.so fish-util.o
 
-.init: $(src) 
-	@ # src_dep (.c and .h files) so people including us know when to remake us.
-	@ # ld so people including us link what we need (e.g. -lm)
-	mkdir -p .obj/fish-util.o
-	echo > .obj/fish-util.o/src_dep $(src) 
-	echo > .obj/fish-util.o/ld $(lib)
-	touch .init
+test:
+	# xxx
 
 fish-util.o: $(src) 
 	$(cc) fish-util.c -c -o fish-util.o
@@ -41,7 +36,6 @@ clean:
 	rm -f *.so
 
 mrproper: clean
-	rm -f .init
 	rm -rf .obj
 
 .PHONY: all install clean mrproper
