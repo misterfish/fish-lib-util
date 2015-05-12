@@ -34,7 +34,7 @@ install:
 	cp fish-utils.h $(install_inc_dir)/fish-utils
 	cp -r fish-utils/*.h $(install_inc_dir)/fish-utils/fish-utils
 	cp libfish-utils.so $(install_lib_dir)
-	$(ldconfig)
+	sudo ldconfig
 
 clean: 
 	rm -rf tmp
