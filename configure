@@ -26,9 +26,6 @@ make_pkg_config() {
     cat     >> "$pkg_config" "$pkg_config_in" 
 
     # Hint: use it like this in your Makefile:
-    # PKG_CONFIG_PATH=<root-dir> pkg-config {fish-util|fish-utils} [flags]
-    # If ever the Requires: fields get filled in, you probably want
-    # something like this:
     # PKG_CONFIG_PATH=<root-dir>:/usr/lib/pkgconfig:/usr/share/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/share/pkgconfig pkg-config {fish-util|fish-utils} [flags]
 }
 

@@ -11,3 +11,5 @@ test
 
 vi
 .vido-files
+
+*.pc
