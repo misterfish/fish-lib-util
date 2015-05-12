@@ -426,9 +426,9 @@ void f_disable_colors() {
     _disable_colors = 1;
 }
 
-/* string with all nulls (can't use strlen).
- * length includes null.
- * caller should free.
+/* String with all nulls (can't use strlen).
+ * length includes \0.
+ * Caller should free.
  */
 char *str(int length) {
     assert(length > 0);
@@ -1234,36 +1234,63 @@ void f_chop_w(wchar_t *s) {
     else piep;
 }
 
-/* reverse XX
+/* Caller should free.
+ * len is the length without the \0 (in other words, the return value of
+ * str(n)len).
+ */
+char *f_reverse_str(char *orig, size_t len) {
+    if (len <= 0) {
+        warn("f_reverse_str: len should be positive");
+        return NULL;
+    }
+    char *ret = f_malloc((len + 1) * sizeof(char));
+    ret[len] = '\0';
+    char *p = orig + len;
+    while (--p >= orig) {
+        *ret++ = *p;
+
+    }
+    return ret - len;
+}
+
+/* Caller should free.
+ */
 char *f_comma(int n) {
-    int size = f_int_length(n);
-    char *as_str = str(size + 1);
-    int size2 = size * 2 * sizeof(char); // *2 is more than enough for commas
-    char *ret_r = str(size2 + 1);
-    memset(ret_r, '\0', size2);
-    int actual_size = snprintf(as_str, size + 1, "%d", n);
+    int n_sz = f_int_length(n);
+    char *n_as_str = str(n_sz + 1);
+    /* *2 is more than enough for commas and \0.
+     */
+    size_t ret_r_sz = n_sz * 2 * sizeof(char); 
+    char *ret_r = str(ret_r_sz);
+//fprintf(stderr, "ret_r on init is %s\n", ret_r);
+    if (snprintf(n_as_str, n_sz + 1, "%d", n) == n_sz + 1)
+        pieprnull;
     int i;
     int j = 0;
     int k = -1;
-    char *str_r = reverse(as_str);
-    for (i = 0; i < actual_size; i++) {
-        char c = *(str_r + i);
-        k++;
-        *(ret_r + k) = c;
+    char *str_r = f_reverse_str(n_as_str, n_sz);
+//fprintf(stderr, "str_r is %s\n", str_r);
+    for (i = 0; i < n_sz; i++) {
+        char c = str_r[i];
+        ret_r[++k] = c;
+//fprintf(stderr, "added %c, ret_r is now %s\n", c, ret_r);
         
-        if (++j == 3 && i != actual_size - 1) {
+        if (++j == 3 && i != n_sz - 1) {
             j = 0;
             k++;
-            *(ret_r + k) = ',';
+            ret_r[k] = ',';
         }
     }
-    free(as_str);
-    free(str_r);
-    char *ret = reverse(ret_r);
+    int bytes_written = k + 1; // not counting \0
+//fprintf(stderr, "ret_r is %s\n", ret_r);
+//fprintf(stderr, "bytes_written is %d\n", bytes_written);
+//fprintf(stderr, "strlen is %d\n", strlen(ret_r));
+    free(n_as_str);
+    char *ret = f_reverse_str(ret_r, bytes_written);
     free(ret_r);
+    free(str_r);
     return ret;
 }
-*/
 
 int f_get_static_str_length() {
     return STATIC_STR_LENGTH;
@@ -1687,6 +1714,7 @@ void _complain(char *file, unsigned int line, bool iserr, bool do_perr, char *fo
 
     if (fl) free(fl);
     if (p) free(p);
+    free(the_str);
     free(bullet);
 }
 

@@ -4,12 +4,12 @@
 int main(int argc, char** argv) {
     fish_utils_init();
 
-    info("Info works");
+    info("info.");
     ask("If it wasn't working, would I ask");
-    say("");
+    say("something to say");
 
-    verbose_cmds(true);
-    sysx("ls /tmp/tmp/tmp/tmp");
+    f_verbose_cmds(true);
+    sys("ls /tmp/tmp/tmp/tmp");
 
     int i = 17;
     char *sev = "seventeen";

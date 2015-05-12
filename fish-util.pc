@@ -1,0 +1,17 @@
+# This is a generated file (see configure)
+
+topdir = "/home/fritz/fish/lib/fish-lib-util"
+
+maindir = "${topdir}/fish-util"
+
+Name: fish-util
+Description: Util libraries for c.
+Version: 0.5.0
+URL: http://github.com/misterfish/fish-lib-util
+# Don't put things in Requires unless they also have .pc files.
+Requires: 
+Conflicts: 
+Libs: -L${maindir} -lfish-util
+Libs.private:
+Cflags: -I${maindir}/fish-util.h 
+

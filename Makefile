@@ -15,7 +15,7 @@ all: check-init $(fishutil_obj) $(fishutils_obj)
 check-init: 
 	@ if [ ! -e .init ]; then echo "\nfish-util: Need to run './configure' first (pwd=$(shell pwd)).\n"; exit 1; fi
 
-test: all test.c
+test: test.c
 	$(cc) test.c $(fishutil_all) $(fishutils_all) -o test
 	./test
 

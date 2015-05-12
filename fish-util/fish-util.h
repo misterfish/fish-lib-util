@@ -354,7 +354,8 @@ bool f_is_int_strn(char *s, int maxlen);
 void f_chop(char *s);
 void f_chop_w(wchar_t *s);
 
-//char *f_comma(int n);
+char *f_reverse_str(char *orig, size_t len);
+char *f_comma(int n);
 
 int f_get_static_str_length();
 
