@@ -11,5 +11,5 @@ Conflicts:
 Libs: -L${maindir} -lfish-util
 # --static
 Libs.private: ${maindir}/fish-util.o
-Cflags: -I${maindir}/fish-util.h 
+Cflags: -I${maindir}
 
