@@ -164,9 +164,37 @@ static void oom_fatal() {
 
 void *f_malloc(size_t s) {
     void *ptr = malloc(s);
-    if (!ptr)
+    if (!ptr && s) // NULL ok if s is 0
         oom_fatal();
     return ptr;
+}
+
+void *f_calloc(size_t nmemb, size_t size) {
+    void *ptr = calloc(nmemb, size);
+    if (!ptr && nmemb && size) // NULL ok if size or nmemb is 0
+        oom_fatal();
+    return ptr;
+}
+
+void *f_realloc(void *ptr, size_t size) {
+    void *new = realloc(ptr, size);
+    if (!new && size) // NULL can mean size is 0
+        oom_fatal();
+    return new;
+}
+
+char *f_strdup(const char *s) {
+    char *ret = strdup(s);
+    if (!ret)
+        oom_fatal();
+    return ret;
+}
+
+char *f_strndup(const char *s, size_t n) {
+    char *ret = strndup(s, n);
+    if (!ret)
+        oom_fatal();
+    return ret;
 }
 
 /* init not necessary, unless you want to start over after having called

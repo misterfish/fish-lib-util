@@ -244,10 +244,39 @@
 
 /* Static strings. 
  * These names should not be used for any other variables.
+ * XX
  */
 char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
 
 void *f_malloc(size_t s);
+void *f_calloc(size_t nmemb, size_t size);
+void *f_realloc(void *ptr, size_t size);
+char *f_strdup(const char *s);
+char *f_strndup(const char *s, size_t n);
+
+#define f_malloct(n, type) do { \
+    return f_malloc(n * sizeof(type)); \
+} while (0)
+
+#define f_mallocv(n, var) do { \
+    return f_malloc(n * sizeof var); \
+} while (0)
+
+#define f_calloct(n, type) do { \
+    return f_calloc(n, sizeof(type)); \
+} while (0)
+
+#define f_callocv(n, var) do { \
+    return f_calloc(n, sizeof var); \
+} while (0)
+
+#define f_realloct(ptr, type) do { \
+    return f_realloc(ptr, sizeof(type)); \
+} while (0)
+
+#define f_reallocv(ptr, var) do { \
+    return f_realloc(ptr, sizeof var); \
+} while (0)
 
 void fish_util_cleanup();
 
