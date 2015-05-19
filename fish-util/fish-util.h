@@ -254,29 +254,23 @@ void *f_realloc(void *ptr, size_t size);
 char *f_strdup(const char *s);
 char *f_strndup(const char *s, size_t n);
 
-#define f_malloct(n, type) do { \
-    return f_malloc(n * sizeof(type)); \
-} while (0)
+#define f_malloct(type) \
+    f_malloc(sizeof(type))
 
-#define f_mallocv(n, var) do { \
-    return f_malloc(n * sizeof var); \
-} while (0)
+#define f_mallocv(var) \
+    f_malloc(sizeof var)
 
-#define f_calloct(n, type) do { \
-    return f_calloc(n, sizeof(type)); \
-} while (0)
+#define f_calloct(n, type) \
+    f_calloc(n, sizeof(type))
 
-#define f_callocv(n, var) do { \
-    return f_calloc(n, sizeof var); \
-} while (0)
+#define f_callocv(n, var) \
+    f_calloc(n, sizeof var)
 
-#define f_realloct(ptr, type) do { \
-    return f_realloc(ptr, sizeof(type)); \
-} while (0)
+#define f_realloct(ptr, type) \
+    f_realloc(ptr, sizeof(type))
 
-#define f_reallocv(ptr, var) do { \
-    return f_realloc(ptr, sizeof var); \
-} while (0)
+#define f_reallocv(ptr, var) \
+    f_realloc(ptr, sizeof var)
 
 void fish_util_cleanup();
 
