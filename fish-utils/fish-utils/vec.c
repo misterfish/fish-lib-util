@@ -64,8 +64,10 @@ int vec_size(vec *v) {
 }
 
 void *vec_get(vec *v, int n) {
-    if (v == NULL) 
-        pieprnull;
+    if (! v) {
+        warn("Null pointer passed to vec_get");
+        return NULL;
+    }
     if (n < 0) 
         pieprnull;
     if (n > v->n - 1) 

@@ -189,15 +189,15 @@
     return; \
 } while (0)
 
-#define piepbr do { \
+/* Be careful about using these two in an if without braces.
+ */
+#define piepbr \
     piep; \
-    break; \
-} while (0)
+    break;
 
-#define piepc do { \
+#define piepc \
     piep; \
-    continue; \
-} while (0)
+    continue;
 
 #define pieprnull do { \
     piep; \
