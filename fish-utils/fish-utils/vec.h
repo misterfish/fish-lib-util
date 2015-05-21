@@ -4,7 +4,8 @@
  * Licence: GPL 2.0
  */
 
-#define VEC_DESTROY_DEEP 0x01
+#define VEC_DESTROY_DEEP    0x01
+#define VEC_CLEAR_DEEP      0x02
 
 typedef struct vec {
     int n;
@@ -19,5 +20,6 @@ void *vec_get(vec *v, int n);
 void *vec_last(vec *v);
 bool vec_destroy(vec *v);
 bool vec_destroy_deep(vec *v);
-bool vec_destroy_flags(vec *v, int flags);
+bool vec_destroy_f(vec *v, int flags);
+bool vec_clear_f(vec *v, int flags);
 bool vec_clear(vec *v);

@@ -82,15 +82,15 @@ void *vec_last(vec *v) {
 }
 
 bool vec_destroy_deep(vec *v) {
-    return vec_destroy_flags(v, VEC_DESTROY_DEEP);
+    return vec_destroy_f(v, VEC_DESTROY_DEEP);
 }
 
-bool vec_destroy_flags(vec *v, int flags) {
+bool vec_destroy_f(vec *v, int flags) {
     if (v == NULL) 
         pieprf;
     if (flags && VEC_DESTROY_DEEP) {
         debug("deep destroy.", 1);
-        if (!vec_clear(v)) 
+        if (!vec_clear_f(v, VEC_CLEAR_DEEP)) 
             pieprf;
     }
     free(v->_data);
@@ -99,17 +99,28 @@ bool vec_destroy_flags(vec *v, int flags) {
 }
 
 bool vec_destroy(vec *v) {
-    return vec_destroy_flags(v, 0);
+    return vec_destroy_f(v, 0);
+}
+
+bool vec_clear_f(vec *v, int flags) {
+    for (int i = 0; i < v->n; i++) {
+        void *ptr = v->_data[i];
+        if (!ptr) 
+            continue;
+        if (flags && VEC_CLEAR_DEEP) {
+            debug("freeing %p", ptr);
+            free(ptr);
+        }
+        v->_data[i] = NULL;
+    }
+    /* Vector will stay at its current size.
+     * Might be nice to shrink it again to init size.
+     * XX
+     */
+    v->n = 0;
+    return true;
 }
 
 bool vec_clear(vec *v) {
-    for (int i = 0; i < v->n; i++) {
-        void *ptr = v->_data[i];
-        if (ptr != NULL) 
-            debug("freeing %p", ptr);
-        free(ptr);
-    }
-    // shrink again XX
-    v->n = 0;
-    return true;
+    return vec_clear_f(v, 0);
 }
