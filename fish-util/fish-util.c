@@ -406,18 +406,22 @@ char *f_get_warn_prefix(char *file, int line) {
 
 bool f_test_f(const char *file) {
     struct stat *s = f_stat_f(file, F_QUIET);
-    if (!s) return 0;
+    if (!s) 
+        return false;
     int mode = s->st_mode;
-    if (!mode) return 0;
+    if (!mode) 
+        return false;
 
     return S_ISREG(mode);
 }
 
 bool f_test_d(const char *file) {
     struct stat *s = f_stat_f(file, F_QUIET);
-    if (!s) return 0;
+    if (!s) 
+        return false;
     int mode = s->st_mode;
-    if (!mode) return 0;
+    if (!mode) 
+        return false;
 
     return S_ISDIR(mode);
 }
@@ -426,7 +430,7 @@ bool f_test_d(const char *file) {
  */
 struct stat *f_stat_f(const char *file, int flags) {
     if (!mystat_initted) {
-        mystat = f_malloc(sizeof(*mystat));
+        mystat = f_mallocv(*mystat);
         mystat_initted = true;
     }
     memset(mystat, 0, sizeof(*mystat));
@@ -439,7 +443,7 @@ struct stat *f_stat_f(const char *file, int flags) {
             _();
             Y(file);
             errno = en;
-            warn("Couldn't stat %s: %s", _s, perr());
+            warn_perr("Couldn't stat %s: %s", _s);
         }
         return NULL;
     }
