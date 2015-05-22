@@ -1082,7 +1082,10 @@ bool f_socket_close(int client_socket) {
 }
 
 /* strlen filename, strlen msg.
- * buf_length applies to both msg and response.
+ * buf_length includes \0.
+ * msg checked against buf_length.
+ * response not checked for size -- caller should ssure it is buf_length
+ * bytes big.
  */
 bool f_socket_unix_message_f(const char *filename, const char *msg, char *response, int buf_length) {
     struct sockaddr_un serv_addr;
@@ -1090,12 +1093,13 @@ bool f_socket_unix_message_f(const char *filename, const char *msg, char *respon
 
     bool trash_response = response == NULL;
 
-    int msg_len = strlen(msg);
-    int filename_len = strlen(filename);
+    int msg_len = strlen(msg); // -O- trust caller
+    int filename_len = strlen(filename); // -O- trust caller
 
+    // both leak on early return XX
     char *filename_color = CY_(filename);
-
     char *msg_s = str(msg_len + 1 + 1);
+
     sprintf(msg_s, "%s\n", msg);
 
     if (strlen(msg) >= buf_length) {
@@ -1119,39 +1123,50 @@ bool f_socket_unix_message_f(const char *filename, const char *msg, char *respon
     strncpy(serv_addr.sun_path, filename, filename_len);
 
     if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof (serv_addr) ) < 0) {
-        iwarn("Error connecting to socket %s: %s", filename_color, perr());
+        iwarn_perr("Error connecting to socket %s", filename_color);
         return false;
     }
 
     int rc = write(sockfd, msg_s, msg_len + 1);
     
     if (rc < 0) {
-        iwarn("Error writing to socket %s: %s", filename_color, perr());
+        iwarn_perr("Error writing to socket %s", filename_color);
         return false;
     }
 
-    char c[2] = "a";
+    /* Read 1 char at a time, and stop on newline or EOF.
+     * Not efficient, but easy to program.
+     * Note that a short read is not an error.
+     */
+    char c[1];
     int i;
     for (i = 0; i < buf_length; i++) {
-        int rc = read(sockfd, c, 1);
-        if (rc < 0) {
-            iwarn("Error reading from socket %s: %s", filename_color, perr());
+        ssize_t numread = read(sockfd, c, 1);
+        if (numread < 0) {
+            iwarn_perr("Error reading from socket %s", filename_color);
             return false;
         }
-        if (*c == '\n') {
+        if (*c == '\n') 
             break;
-        }
-        if (!trash_response) strncat(response, c, 1);
+        if (!trash_response) 
+            *response++ = *c;
     }
-    close(sockfd);
+    *response = '\0';
+
+    if (close(sockfd)) {
+        iwarn_perr("Error closing socket fd %d", sockfd);
+        return false;
+    }
 
     free(filename_color);
+    free(msg_s);
 
     return true;
 }
 
 bool f_socket_unix_message(const char *filename, const char *msg) {
-    return f_socket_unix_message_f(filename, msg, NULL, SOCKET_LENGTH_DEFAULT + 1);
+    //return f_socket_unix_message_f(filename, msg, NULL, SOCKET_LENGTH_DEFAULT + 1);
+    return f_socket_unix_message_f(filename, msg, NULL, SOCKET_LENGTH_DEFAULT);
 }
 
 double f_time_hires() {
