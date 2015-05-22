@@ -91,8 +91,8 @@ char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
 static char *warn_prefix;
 static int warn_prefix_size = 0;
 
-static const char *BULLET = "ঈ";
-static const int BULLET_LENGTH = 3; // in utf-8 at least XX
+//static const char *BULLETS[] = {"ঈ", "꣐", "⩕", "٭", "᳅", "𝇚", "𝄢", "𝄓", "𝄋", "𝁐"};
+static const char *BULLETS[] = {"ঈ", "꣐", "⩕", "٭", "᳅"};
 
 static struct stat *mystat;
 static bool mystat_initted = false;
@@ -153,6 +153,34 @@ enum COLORS {
 static int _disable_colors = 0;
 static bool _die = false;
 static bool _verbose = true;
+
+/* Returns random double from [0, r).
+ * Caller should check for overflows etc.
+ * Don't use this function, ever, at all. Only sometimes.
+ */
+double get_random(int r) {
+    struct timeval tv = {0};
+    if (gettimeofday(&tv, NULL)) {
+        warn_perr("Can't call gettimeofday");
+        return -1;
+    }
+    srandom(tv.tv_sec * tv.tv_usec);
+    // RAND_MAX ~ 31 bits
+    double rand = random(); 
+    if (rand == RAND_MAX) 
+        rand -= .1;
+    rand = rand / RAND_MAX * r;
+    if (rand == r) {
+        iwarn("Error making random number.");
+        return -1;
+    }
+    return rand;
+}
+
+static char *get_bullet() {
+    static short num_bullets = sizeof(BULLETS) / sizeof(char*);
+    return (char *) BULLETS[(int) get_random(num_bullets)];
+}
 
 static void oom_fatal() {
     fprintf(stderr, "Out of memory! (fish-util.c)");
@@ -675,8 +703,9 @@ void ask(const char *format, ...) {
     }
     va_end( arglist );
 
-    char *question = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + BULLET_LENGTH + 1 + 1 + 1 + 1);
-    char *c = M_(BULLET);
+    char *bullet = get_bullet();
+    char *question = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + strlen(bullet) + 1 + 1 + 1 + 1);
+    char *c = M_(bullet);
     sprintf(question, "%s %s? ", c, new);
     printf(question);
     free(c);
@@ -700,8 +729,9 @@ void info(const char *format, ...) {
     }
     va_end( arglist );
 
-    char *infos = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + BULLET_LENGTH + 1 + 1 + 1);
-    char *c = BB_(BULLET);
+    char *bullet = get_bullet();
+    char *infos = str(strlen(new) + COLOR_LENGTH + COLOR_LENGTH_RESET + strlen(bullet) + 1 + 1 + 1);
+    char *c = BB_(bullet);
     sprintf(infos, "%s %s\n", c, new);
     printf(infos);
     free(c);
@@ -1598,7 +1628,8 @@ void _complain(char *file, unsigned int line, bool iserr, bool do_perr, char *fo
      */
     char *fl = NULL;
     char *p = NULL; // perr
-    char *bullet = iserr ? R_(BULLET) : BR_(BULLET);
+    char *bull = get_bullet();
+    char *bullet = iserr ? R_(bull) : BR_(bull);
 
     char *t1 = "";
     char *t2 = "";
@@ -1792,8 +1823,9 @@ static char **_get_static_str_ptr() {
 }
 
 static void _sys_say(const char *cmd) {
-    char *new = str(strlen(cmd) + BULLET_LENGTH + COLOR_LENGTH + COLOR_LENGTH_RESET + 2 + 1);
-    char *c = G_(BULLET);
+    char *bullet = get_bullet();
+    char *new = str(strlen(cmd) + strlen(bullet) + COLOR_LENGTH + COLOR_LENGTH_RESET + 2 + 1);
+    char *c = G_(bullet);
     sprintf(new, "%s %s", c, cmd);
     say (new);
     free(new);
