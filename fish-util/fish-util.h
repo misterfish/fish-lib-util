@@ -287,6 +287,7 @@ void _();
 void spr(const char *format, ...);
 char *spr_(const char *format, int size, ...);
 
+char *get_bullet();
 void say(const char *format, ...);
 void ask(const char *format, ...);
 void info(const char *format, ...);

@@ -177,7 +177,7 @@ double get_random(int r) {
     return rnd;
 }
 
-static char *get_bullet() {
+char *get_bullet() {
     static short num_bullets = sizeof(BULLETS) / sizeof(char*);
     return (char *) BULLETS[(int) get_random(num_bullets)];
 }
