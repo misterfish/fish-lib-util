@@ -166,15 +166,15 @@ double get_random(int r) {
     }
     srandom(tv.tv_sec * tv.tv_usec);
     // RAND_MAX ~ 31 bits
-    double rand = random(); 
+    long int rand = random(); 
     if (rand == RAND_MAX) 
-        rand -= .1;
-    rand = rand / RAND_MAX * r;
-    if (rand == r) {
+        rand--;
+    double rnd = rand * 1.0 / RAND_MAX * r;
+    if (rnd == r) {
         iwarn("Error making random number.");
         return -1;
     }
-    return rand;
+    return rnd;
 }
 
 static char *get_bullet() {
@@ -696,6 +696,7 @@ void ask(const char *format, ...) {
     va_list arglist, arglist_copy;
     va_start( arglist, format );
     va_copy(arglist_copy, arglist);
+    // get rid of new2, just check rc XX
     vsnprintf( new, INFO_LENGTH, format, arglist );
     vsnprintf( new2, INFO_LENGTH + 1, format, arglist_copy );
     if (strncmp(new, new2, INFO_LENGTH)) { // no + 1 necessary
@@ -722,6 +723,7 @@ void info(const char *format, ...) {
     va_list arglist_copy;
     va_start( arglist, format );
     va_copy(arglist_copy, arglist);
+    // get rid of new2, just check rc XX
     vsnprintf( new, INFO_LENGTH, format, arglist );
     vsnprintf( new2, INFO_LENGTH + 1, format, arglist_copy );
     if (strncmp(new, new2, INFO_LENGTH)) { // no + 1 necessary
@@ -1339,18 +1341,15 @@ char *f_comma(int n) {
      */
     size_t ret_r_sz = n_sz * 2 * sizeof(char); 
     char *ret_r = str(ret_r_sz);
-//fprintf(stderr, "ret_r on init is %s\n", ret_r);
-    if (snprintf(n_as_str, n_sz + 1, "%d", n) == n_sz + 1)
+    if (snprintf(n_as_str, n_sz + 1, "%d", n) >= n_sz + 1)
         pieprnull;
     int i;
     int j = 0;
     int k = -1;
     char *str_r = f_reverse_str(n_as_str, n_sz);
-//fprintf(stderr, "str_r is %s\n", str_r);
     for (i = 0; i < n_sz; i++) {
         char c = str_r[i];
         ret_r[++k] = c;
-//fprintf(stderr, "added %c, ret_r is now %s\n", c, ret_r);
         
         if (++j == 3 && i != n_sz - 1) {
             j = 0;
@@ -1359,9 +1358,6 @@ char *f_comma(int n) {
         }
     }
     int bytes_written = k + 1; // not counting \0
-//fprintf(stderr, "ret_r is %s\n", ret_r);
-//fprintf(stderr, "bytes_written is %d\n", bytes_written);
-//fprintf(stderr, "strlen is %d\n", strlen(ret_r));
     free(n_as_str);
     char *ret = f_reverse_str(ret_r, bytes_written);
     free(ret_r);
