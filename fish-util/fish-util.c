@@ -54,6 +54,9 @@
 
 #include <assert.h>
 
+// dirname. 
+#include <libgen.h>
+
 // offsetof
 #include <stddef.h>
 
@@ -189,6 +192,21 @@ static void oom_fatal() {
 
 /* Public functions.
  */
+
+/* glibc version of dirname segfaults with static strings. 
+ * This version does a strdup first.
+ * Caller should not free.
+ */
+char *f_dirname(char *s) {
+    if (!s) {
+        iwarn("f_dirname(): null arg");
+        return NULL;
+    }
+    char *t = f_strdup(s);
+    char *ret = dirname(t);
+    free(t);
+    return ret;
+}
 
 void *f_malloc(size_t s) {
     void *ptr = malloc(s);
@@ -966,6 +984,30 @@ void f_benchmark(int flag) {
         sec = -1;
         usec = -1;
     }
+}
+
+bool f_atod(char *s, double *ret) {
+    char *endptr;
+    errno = 0;
+    double d = strtod(s, &endptr);
+    if (errno || (endptr - s != strlen(s)))
+        return false;
+    if (!ret)
+        return false;
+    *ret = d;
+    return true;
+}
+
+bool f_atoi(char *s, int *ret) {
+    char *endptr;
+    errno = 0;
+    int i = strtol(s, &endptr, 10);
+    if (errno || (endptr - s != strlen(s)))
+        return false;
+    if (!ret)
+        return false;
+    *ret = i;
+    return true;
 }
 
 int f_int_length(int i) {
