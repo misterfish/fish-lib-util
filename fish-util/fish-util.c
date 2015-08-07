@@ -54,6 +54,9 @@
 
 #include <assert.h>
 
+// dirname. 
+#include <libgen.h>
+
 // offsetof
 #include <stddef.h>
 
@@ -166,18 +169,18 @@ double get_random(int r) {
     }
     srandom(tv.tv_sec * tv.tv_usec);
     // RAND_MAX ~ 31 bits
-    double rand = random(); 
+    long int rand = random(); 
     if (rand == RAND_MAX) 
-        rand -= .1;
-    rand = rand / RAND_MAX * r;
-    if (rand == r) {
+        rand--;
+    double rnd = rand * 1.0 / RAND_MAX * r;
+    if (rnd == r) {
         iwarn("Error making random number.");
         return -1;
     }
-    return rand;
+    return rnd;
 }
 
-static char *get_bullet() {
+char *get_bullet() {
     static short num_bullets = sizeof(BULLETS) / sizeof(char*);
     return (char *) BULLETS[(int) get_random(num_bullets)];
 }
@@ -189,6 +192,21 @@ static void oom_fatal() {
 
 /* Public functions.
  */
+
+/* glibc version of dirname segfaults with static strings. 
+ * This version does a strdup first.
+ * Caller should not free.
+ */
+char *f_dirname(char *s) {
+    if (!s) {
+        iwarn("f_dirname(): null arg");
+        return NULL;
+    }
+    char *t = f_strdup(s);
+    char *ret = dirname(t);
+    free(t);
+    return ret;
+}
 
 void *f_malloc(size_t s) {
     void *ptr = malloc(s);
@@ -696,6 +714,7 @@ void ask(const char *format, ...) {
     va_list arglist, arglist_copy;
     va_start( arglist, format );
     va_copy(arglist_copy, arglist);
+    // get rid of new2, just check rc XX
     vsnprintf( new, INFO_LENGTH, format, arglist );
     vsnprintf( new2, INFO_LENGTH + 1, format, arglist_copy );
     if (strncmp(new, new2, INFO_LENGTH)) { // no + 1 necessary
@@ -722,6 +741,7 @@ void info(const char *format, ...) {
     va_list arglist_copy;
     va_start( arglist, format );
     va_copy(arglist_copy, arglist);
+    // get rid of new2, just check rc XX
     vsnprintf( new, INFO_LENGTH, format, arglist );
     vsnprintf( new2, INFO_LENGTH + 1, format, arglist_copy );
     if (strncmp(new, new2, INFO_LENGTH)) { // no + 1 necessary
@@ -966,6 +986,30 @@ void f_benchmark(int flag) {
     }
 }
 
+bool f_atod(char *s, double *ret) {
+    char *endptr;
+    errno = 0;
+    double d = strtod(s, &endptr);
+    if (errno || (endptr - s != strlen(s)))
+        return false;
+    if (!ret)
+        return false;
+    *ret = d;
+    return true;
+}
+
+bool f_atoi(char *s, int *ret) {
+    char *endptr;
+    errno = 0;
+    int i = strtol(s, &endptr, 10);
+    if (errno || (endptr - s != strlen(s)))
+        return false;
+    if (!ret)
+        return false;
+    *ret = i;
+    return true;
+}
+
 int f_int_length(int i) {
     if (i == 0) return 1;
     if (i < 0) return f_int_length(-1 * i);
@@ -1082,7 +1126,10 @@ bool f_socket_close(int client_socket) {
 }
 
 /* strlen filename, strlen msg.
- * buf_length applies to both msg and response.
+ * buf_length includes \0.
+ * msg checked against buf_length.
+ * response not checked for size -- caller should ssure it is buf_length
+ * bytes big.
  */
 bool f_socket_unix_message_f(const char *filename, const char *msg, char *response, int buf_length) {
     struct sockaddr_un serv_addr;
@@ -1090,12 +1137,13 @@ bool f_socket_unix_message_f(const char *filename, const char *msg, char *respon
 
     bool trash_response = response == NULL;
 
-    int msg_len = strlen(msg);
-    int filename_len = strlen(filename);
+    int msg_len = strlen(msg); // -O- trust caller
+    int filename_len = strlen(filename); // -O- trust caller
 
+    // both leak on early return XX
     char *filename_color = CY_(filename);
-
     char *msg_s = str(msg_len + 1 + 1);
+
     sprintf(msg_s, "%s\n", msg);
 
     if (strlen(msg) >= buf_length) {
@@ -1119,39 +1167,50 @@ bool f_socket_unix_message_f(const char *filename, const char *msg, char *respon
     strncpy(serv_addr.sun_path, filename, filename_len);
 
     if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof (serv_addr) ) < 0) {
-        iwarn("Error connecting to socket %s: %s", filename_color, perr());
+        iwarn_perr("Error connecting to socket %s", filename_color);
         return false;
     }
 
     int rc = write(sockfd, msg_s, msg_len + 1);
     
     if (rc < 0) {
-        iwarn("Error writing to socket %s: %s", filename_color, perr());
+        iwarn_perr("Error writing to socket %s", filename_color);
         return false;
     }
 
-    char c[2] = "a";
+    /* Read 1 char at a time, and stop on newline or EOF.
+     * Not efficient, but easy to program.
+     * Note that a short read is not an error.
+     */
+    char c[1];
     int i;
     for (i = 0; i < buf_length; i++) {
-        int rc = read(sockfd, c, 1);
-        if (rc < 0) {
-            iwarn("Error reading from socket %s: %s", filename_color, perr());
+        ssize_t numread = read(sockfd, c, 1);
+        if (numread < 0) {
+            iwarn_perr("Error reading from socket %s", filename_color);
             return false;
         }
-        if (*c == '\n') {
+        if (*c == '\n') 
             break;
-        }
-        if (!trash_response) strncat(response, c, 1);
+        if (!trash_response) 
+            *response++ = *c;
     }
-    close(sockfd);
+    *response = '\0';
+
+    if (close(sockfd)) {
+        iwarn_perr("Error closing socket fd %d", sockfd);
+        return false;
+    }
 
     free(filename_color);
+    free(msg_s);
 
     return true;
 }
 
 bool f_socket_unix_message(const char *filename, const char *msg) {
-    return f_socket_unix_message_f(filename, msg, NULL, SOCKET_LENGTH_DEFAULT + 1);
+    //return f_socket_unix_message_f(filename, msg, NULL, SOCKET_LENGTH_DEFAULT + 1);
+    return f_socket_unix_message_f(filename, msg, NULL, SOCKET_LENGTH_DEFAULT);
 }
 
 double f_time_hires() {
@@ -1324,18 +1383,15 @@ char *f_comma(int n) {
      */
     size_t ret_r_sz = n_sz * 2 * sizeof(char); 
     char *ret_r = str(ret_r_sz);
-//fprintf(stderr, "ret_r on init is %s\n", ret_r);
-    if (snprintf(n_as_str, n_sz + 1, "%d", n) == n_sz + 1)
+    if (snprintf(n_as_str, n_sz + 1, "%d", n) >= n_sz + 1)
         pieprnull;
     int i;
     int j = 0;
     int k = -1;
     char *str_r = f_reverse_str(n_as_str, n_sz);
-//fprintf(stderr, "str_r is %s\n", str_r);
     for (i = 0; i < n_sz; i++) {
         char c = str_r[i];
         ret_r[++k] = c;
-//fprintf(stderr, "added %c, ret_r is now %s\n", c, ret_r);
         
         if (++j == 3 && i != n_sz - 1) {
             j = 0;
@@ -1344,9 +1400,6 @@ char *f_comma(int n) {
         }
     }
     int bytes_written = k + 1; // not counting \0
-//fprintf(stderr, "ret_r is %s\n", ret_r);
-//fprintf(stderr, "bytes_written is %d\n", bytes_written);
-//fprintf(stderr, "strlen is %d\n", strlen(ret_r));
     free(n_as_str);
     char *ret = f_reverse_str(ret_r, bytes_written);
     free(ret_r);

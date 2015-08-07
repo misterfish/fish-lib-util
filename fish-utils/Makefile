@@ -6,7 +6,7 @@ install_lib_dir = /usr/local/lib
 cc = gcc -std=c99 -fPIC
 shared = -shared
 
-lib = -lm -lpthread -lpcre
+lib = -lm -lpcre
 inc = -I$(fish_util_dir)
 
 src = fish-utils/vec.c fish-utils/regex.c fish-utils/main.c fish-utils.h

@@ -248,6 +248,7 @@
  */
 char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
 
+char *f_dirname(char *s);
 void *f_malloc(size_t s);
 void *f_calloc(size_t nmemb, size_t size);
 void *f_realloc(void *ptr, size_t size);
@@ -287,6 +288,7 @@ void _();
 void spr(const char *format, ...);
 char *spr_(const char *format, int size, ...);
 
+char *get_bullet();
 void say(const char *format, ...);
 void ask(const char *format, ...);
 void info(const char *format, ...);
@@ -349,6 +351,9 @@ bool f_yes_no_flags(int, int);
 void f_autoflush();
 bool f_sig(int signum, void *func);
 void f_benchmark();
+
+bool f_atod(char *s, double *ret);
+bool f_atoi(char *s, int *ret);
 int f_int_length(int i);
 
 bool f_socket_make_named(const char *filename, int *socket);

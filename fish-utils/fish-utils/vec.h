@@ -18,6 +18,10 @@ int vec_size(vec *v);
 bool vec_add(vec *v, void *ptr);
 void *vec_get(vec *v, int n);
 void *vec_last(vec *v);
+
+/* vec_destroy should be void, while _deep and _f should be bool.
+ * XX
+ */
 bool vec_destroy(vec *v);
 bool vec_destroy_deep(vec *v);
 bool vec_destroy_f(vec *v, int flags);
