@@ -91,8 +91,8 @@ char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
 static char *warn_prefix;
 static int warn_prefix_size = 0;
 
-//static const char *BULLETS[] = {"ঈ", "꣐", "⩕", "٭", "᳅", "𝇚", "𝄢", "𝄓", "𝄋", "𝁐"};
-static const char *BULLETS[] = {"ঈ", "꣐", "⩕", "٭", "᳅"};
+static const char *BULLETS[] = {"ঈ", "꣐", "⩕", "٭", "᳅", "𝇚", "𝄢", "𝄓", "𝄋", "𝁐"};
+//static const char *BULLETS[] = {"ঈ", "꣐", "⩕", "٭", "᳅"};
 
 static struct stat *mystat;
 static bool mystat_initted = false;
