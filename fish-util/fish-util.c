@@ -94,8 +94,8 @@ char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
 static char *warn_prefix;
 static int warn_prefix_size = 0;
 
-static const char *BULLETS[] = {"ঈ", "꣐", "⩕", "٭", "᳅", "𝇚", "𝄢", "𝄓", "𝄋", "𝁐"};
-//static const char *BULLETS[] = {"ঈ", "꣐", "⩕", "٭", "᳅"};
+static const char *BULLETS[] = {"ঈ", "꣐", "⩕", "٭", "᳅", "𝇚", "𝄢", "𝄓", "𝄋", "𝁐", "ꢝ"};
+static short NUM_BULLETS = sizeof(BULLETS) / sizeof(char*);
 
 static struct stat *mystat;
 static bool mystat_initted = false;
@@ -181,8 +181,7 @@ double get_random(int r) {
 }
 
 char *get_bullet() {
-    static short num_bullets = sizeof(BULLETS) / sizeof(char*);
-    return (char *) BULLETS[(int) get_random(num_bullets)];
+    return (char *) BULLETS[(int) get_random(NUM_BULLETS)];
 }
 
 static void oom_fatal() {
