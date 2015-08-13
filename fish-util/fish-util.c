@@ -94,7 +94,7 @@ char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
 static char *warn_prefix;
 static int warn_prefix_size = 0;
 
-static const char *BULLETS[] = {"ঈ", "꣐", "⩕", "٭", "᳅", "𝇚", "𝄢", "𝄓", "𝄋", "𝁐", "ꢝ"};
+static const char *BULLETS[] = {"ঈ", "꣐", "⩕", "٭", "᳅", "𝄢", "𝄓", "𝄋", "𝁐", "ꢝ"};
 static short NUM_BULLETS = sizeof(BULLETS) / sizeof(char*);
 
 static struct stat *mystat;
