@@ -354,7 +354,7 @@ void f_benchmark();
 
 bool f_atod(char *s, double *ret);
 bool f_atoi(char *s, int *ret);
-int f_int_length(int i);
+int f_int_length(long i);
 
 bool f_socket_make_named(const char *filename, int *socket);
 bool f_socket_make_client(int socket, int *client_socket);
@@ -383,7 +383,7 @@ void f_chop(char *s);
 void f_chop_w(wchar_t *s);
 
 char *f_reverse_str(char *orig, size_t len);
-char *f_comma(int n);
+char *f_comma(long n);
 
 int f_get_static_str_length();
 

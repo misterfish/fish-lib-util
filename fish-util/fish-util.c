@@ -1009,9 +1009,11 @@ bool f_atoi(char *s, int *ret) {
     return true;
 }
 
-int f_int_length(int i) {
-    if (i == 0) return 1;
-    if (i < 0) return f_int_length(-1 * i);
+int f_int_length(long i) {
+    if (i == 0)
+        return 1;
+    if (i < 0)
+        return 1 + f_int_length(-1 * i);
 
     return 1 + (int) log10(i);
 }
@@ -1375,7 +1377,7 @@ char *f_reverse_str(char *orig, size_t len) {
 
 /* Caller should free.
  */
-char *f_comma(int n) {
+char *f_comma(long n) {
     int n_sz = f_int_length(n);
     char *n_as_str = str(n_sz + 1);
     /* *2 is more than enough for commas and \0.
