@@ -8,8 +8,6 @@
 #else
 #define FISH_UTIL_H
 
-#define _GNU_SOURCE
-
 #include <stdbool.h>
 #include <sys/types.h>
 #include <stdio.h>
