@@ -6,9 +6,6 @@
 
 #define _GNU_SOURCE // here, not header, not exported
 
-// Be careful, truncated cmds bad. XX
-#define CMD_LENGTH 1000
-
 /* For errors and warnings.
  */
 #define COMPLAINT_LENGTH F_COMPLAINT_LENGTH
