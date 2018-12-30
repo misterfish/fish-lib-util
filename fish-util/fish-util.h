@@ -25,7 +25,7 @@
 /* ##__VA_ARGS__ to swallow the preceding comma if omitted.
  */
 
-#ifdef DEBUG 
+#ifdef DEBUG
 # define debug(x, ...) do { \
     char *pref = f_get_warn_prefix(__FILE__, __LINE__); \
     char *dbg = str(DEBUG_LENGTH); \
@@ -43,8 +43,8 @@
 
 #define F_COMPLAINT_LENGTH 500
 
-/* 
- * Some nice-to-look-at output and less tedious coding. 
+/*
+ * Some nice-to-look-at output and less tedious coding.
  *
  * It is (probably) GCC-specific -- to keep it portable we could have used
  * __VA_ARGS__ instead of args..., but there is still no good way to do the
@@ -85,7 +85,7 @@
  *
  * warn_aserr_xxx(...)  [to make it look like an error, but not die]
  *
- * piep, pieprf, piepr0, etc.: (pronounced 'peep'). 
+ * piep, pieprf, piepr0, etc.: (pronounced 'peep').
  * Intended as easy-to-type way to warn (and possibly return false, return
  * 0, etc.). Pipes through iwarn().
  *
@@ -170,7 +170,7 @@
 #define pieprf do { \
     piep; \
     return false; \
-} while (0) 
+} while (0)
 
 #define pieprt do { \
     piep; \
@@ -213,7 +213,7 @@
 } while (0)
 
 /* int (32 bits).
- * Not all combinations make sense and some are redundant. 
+ * Not all combinations make sense and some are redundant.
  * Depends on function.
  */
 
@@ -240,18 +240,18 @@
 #define F_READ_WRITE_NO_TRUNC   0x100000
 #define F_READ_WRITE_TRUNC      0x200000
 
-/* Static strings. 
+/* Static strings.
  * These names should not be used for any other variables.
  * XX
  */
 char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
 
-char *f_dirname(char *s);
-void *f_malloc(size_t s);
-void *f_calloc(size_t nmemb, size_t size);
-void *f_realloc(void *ptr, size_t size);
-char *f_strdup(const char *s);
-char *f_strndup(const char *s, size_t n);
+char *f_dirname (const char *s);
+void *f_malloc (size_t s);
+void *f_calloc (size_t nmemb, size_t size);
+void *f_realloc (void *ptr, size_t size);
+char *f_strdup (const char *s);
+char *f_strndup (const char *s, size_t n);
 
 #define f_malloct(type) \
     f_malloc(sizeof(type))
@@ -271,135 +271,135 @@ char *f_strndup(const char *s, size_t n);
 #define f_reallocv(ptr, var) \
     f_realloc(ptr, sizeof var)
 
-void fish_util_cleanup();
+void fish_util_cleanup ();
 
-void f_signame(int signal, char **name, char **desc);
+void f_signame (int signal, char **name, char **desc);
 
 /* Only necessary to restart after a cleanup.
  */
-void fish_util_init();
+void fish_util_init ();
 
 /* Functions without f_ prefix.
  */
 
-void _();
-void spr(const char *format, ...);
-char *spr_(const char *format, int size, ...);
+void _ ();
+void spr (const char *format, ...);
+char *spr_ (const char *format, int size, ...);
 
-char *get_bullet();
-void say(const char *format, ...);
-void ask(const char *format, ...);
-void info(const char *format, ...);
-FILE *sysr(const char *cmd);
-FILE *sysw(const char *cmd);
+char *get_bullet ();
+void say (const char *format, ...);
+void ask (const char *format, ...);
+void info (const char *format, ...);
+FILE *sysr (const char *cmd);
+FILE *sysw (const char *cmd);
 /* Run command and read input until EOF.
  */
-int sys(const char *cmd);
-int sysclose(FILE *f);
-int sysclose_f(FILE *f, const char *cmd, int flags);
+int sys (const char *cmd);
+int sysclose (FILE *f);
+int sysclose_f (FILE *f, const char *cmd, int flags);
 
-FILE *safeopen(char *filespec);
-FILE *safeopen_f(char *filespec, int flags);
+FILE *safeopen (const char *filespec);
+FILE *safeopen_f (const char *filespec, int flags);
 
-const char *perr();
+const char *perr ();
 
-wchar_t *d8(char *s);
+wchar_t *d8 (char *s);
 
-char *str(int length);
+char *str (int length);
 
-char *R_(const char *s);
-char *BR_(const char *s);
-char *G_(const char *s);
-char *BG_(const char *s);
-char *Y_(const char *s);
-char *BY_(const char *s);
-char *B_(const char *s);
-char *BB_(const char *s);
-char *CY_(const char *s);
-char *BCY_(const char *s);
-char *M_(const char *s);
-char *BM_(const char *s);
+char *R_ (const char *s);
+char *BR_ (const char *s);
+char *G_ (const char *s);
+char *BG_ (const char *s);
+char *Y_ (const char *s);
+char *BY_ (const char *s);
+char *B_ (const char *s);
+char *BB_ (const char *s);
+char *CY_ (const char *s);
+char *BCY_ (const char *s);
+char *M_ (const char *s);
+char *BM_ (const char *s);
 
-void R(const char *s);
-void BR(const char *s);
-void G(const char *s);
-void BG(const char *s);
-void Y(const char *s);
-void BY(const char *s);
-void B(const char *s);
-void BB(const char *s);
-void CY(const char *s);
-void BCY(const char *s);
-void M(const char *s);
-void BM(const char *s);
+void R (const char *s);
+void BR (const char *s);
+void G (const char *s);
+void BG (const char *s);
+void Y (const char *s);
+void BY (const char *s);
+void B (const char *s);
+void BB (const char *s);
+void CY (const char *s);
+void BCY (const char *s);
+void M (const char *s);
+void BM (const char *s);
 
-/* Called by error macros in .h. 
+/* Called by error macros in .h.
  * Means header is not enough to use error macros (.o needs to be linked as well).
  */
-void _err();
+void _err ();
 
 /* Functions with f_
  */
-void f_disable_colors();
-void f_sys_die(bool b);
-void f_verbose_cmds(bool b);
+void f_disable_colors ();
+void f_sys_die (bool b);
+void f_verbose_cmds (bool b);
 
-bool f_yes_no();
-bool f_yes_no_flags(int, int);
-void f_autoflush();
-bool f_sig(int signum, void *func);
-void f_benchmark();
+bool f_yes_no ();
+bool f_yes_no_flags (int, int);
+void f_autoflush ();
+bool f_sig (int signum, void *func);
+void f_benchmark ();
 
-bool f_atod(char *s, double *ret);
-bool f_atoi(char *s, int *ret);
-int f_int_length(long i);
+bool f_atod (const char *s, double *ret);
+bool f_atoi (const char *s, int *ret);
+int f_int_length (long i);
 
-bool f_socket_make_named(const char *filename, int *socket);
-bool f_socket_make_client(int socket, int *client_socket);
+bool f_socket_make_named (const char *filename, int *socket);
+bool f_socket_make_client (int socket, int *client_socket);
 
 /* num_read can be NULL.
  */
-bool f_socket_read(int client_socket, ssize_t *num_read, char *buf, size_t max_length);
+bool f_socket_read (int client_socket, ssize_t *num_read, char *buf, size_t max_length);
 
 /* num_written can be NULL.
  */
-bool f_socket_write(int client_socket, ssize_t *num_written, const char *buf, size_t len);
+bool f_socket_write (int client_socket, ssize_t *num_written, const char *buf, size_t len);
 
-bool f_socket_close(int client_socket);
+bool f_socket_close (int client_socket);
 
-bool f_socket_unix_message(const char *filename, const char *msg);
-bool f_socket_unix_message_f(const char *filename, const char *msg, char *response, int buf_length);
+bool f_socket_unix_message (const char *filename, const char *msg);
+bool f_socket_unix_message_f (const char *filename, const char *msg, char *response, int buf_length);
 
-double f_time_hires();
+double f_time_hires ();
 
-char *f_field(int width, char *string, int max_len);
+char *f_field (int width, const char *string, int max_len);
 
-bool f_is_int_str(char *s);
-bool f_is_int_strn(char *s, int maxlen);
+bool f_is_int_str (const char *s);
+bool f_is_int_strn (const char *s, int maxlen);
 
-void f_chop(char *s);
-void f_chop_w(wchar_t *s);
+void f_chop (char *s);
+void f_chop_w (wchar_t *s);
 
-char *f_reverse_str(char *orig, size_t len);
-char *f_comma(long n);
+char *f_reverse_str (const char *orig, size_t len);
+char *f_comma (long n);
 
-int f_get_static_str_length();
+int f_get_static_str_length ();
 
-bool f_set_utf8();
-bool f_set_utf8_f(int flags);
+bool f_set_utf8 ();
+bool f_set_utf8_f (int flags);
 
-struct stat *f_stat_f(const char *file, int flags);
-struct stat *f_stat(const char *file);
+struct stat *f_stat_f (const char *file, int flags);
+struct stat *f_stat (const char *file);
 
-bool f_test_f(const char *file);
-bool f_test_d(const char *file);
+bool f_test_f (const char *file);
+bool f_test_d (const char *file);
 
-char *f_get_warn_prefix(char *file, int line);
+char *f_get_warn_prefix (const char *file, int line);
 
-int f_get_max_color_length();
-int f_get_color_reset_length();
+int f_get_max_color_length ();
+int f_get_color_reset_length ();
 
-void _complain(char *file, unsigned int line, bool iserr, bool perr, char *format, ...);
+void _complain (const char *file, unsigned int line, bool iserr, bool perr, const char *format, ...);
 
 /* guard */
 #endif
