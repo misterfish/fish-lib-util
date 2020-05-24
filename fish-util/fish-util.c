@@ -178,7 +178,8 @@ double get_random (int r) {
 }
 
 char *get_bullet () {
-    return (char *) BULLETS[(int) get_random (NUM_BULLETS)];
+    // return (char *) BULLETS[(int) get_random (NUM_BULLETS)];
+    return (char *) BULLETS[3];
 }
 
 static void oom_fatal () {
