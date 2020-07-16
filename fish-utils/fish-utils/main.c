@@ -15,12 +15,12 @@ void fish_utils_init() {
 }
 
 void f_track_heap(void *ptr) {
-    if (! vec_add(_fish_utils_heap, ptr)) 
+    if (! vec_add(_fish_utils_heap, ptr))
         piep;
 }
 
 void fish_utils_cleanup() {
-    if (! _fish_utils_heap) 
+    if (! _fish_utils_heap)
         piepr;
     if (!vec_destroy_f(_fish_utils_heap, VEC_DESTROY_DEEP))
         piepr;

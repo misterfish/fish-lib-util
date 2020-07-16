@@ -43,7 +43,7 @@ int match_full(char *target, char *regexp_s, char *ret[], int target_len /* with
     bool auto_gc = (flags & F_REGEX_NO_FREE_MATCHES) ? false : true;
 
     int erroffset;
-    const char *error; 
+    const char *error;
     pcre *re = pcre_compile(
             regexp_s,
             pass_flags,
@@ -60,11 +60,11 @@ int match_full(char *target, char *regexp_s, char *ret[], int target_len /* with
     }
 
     int num_groups;
-    if ((rc = pcre_fullinfo(re, 
+    if ((rc = pcre_fullinfo(re,
             NULL, // no study
             PCRE_INFO_CAPTURECOUNT,
             &num_groups
-            ))) { 
+            ))) {
         _();
         BR(regexp_s);
         /* man pcreapi */
@@ -119,7 +119,7 @@ int match_full(char *target, char *regexp_s, char *ret[], int target_len /* with
         ovector_size            /* number of elements (NOT size in bytes) */
     );
 
-    if (rc < 0) { 
+    if (rc < 0) {
         if (rc == PCRE_ERROR_NOMATCH) {
             // ok, return false
         }
@@ -145,9 +145,9 @@ int match_full(char *target, char *regexp_s, char *ret[], int target_len /* with
             int l = ovector[a];
             int r = ovector[b];
             char *match = str(r - l + 1);
-            memcpy(match, target + l, r - l); 
-            if (ret) 
-                ret[++idx] = match; 
+            memcpy(match, target + l, r - l);
+            if (ret)
+                ret[++idx] = match;
 
             /* match'es will be freed when fish_utils_cleanup() is
              * called. convenient but footprint will get big if program does

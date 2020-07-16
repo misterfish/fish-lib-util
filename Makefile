@@ -4,12 +4,12 @@ fishutils_dir 	:= fish-utils
 pkgconfig	= pkg-config/static/fish-util.pc \
                   pkg-config/static/fish-utils.pc \
                   pkg-config/dynamic/fish-util.pc \
-                  pkg-config/dynamic/fish-utils.pc 
+                  pkg-config/dynamic/fish-utils.pc
 
 pkgconfig_ins	= pkg-config/static/fish-util.pc.in \
                   pkg-config/static/fish-utils.pc.in \
                   pkg-config/dynamic/fish-util.pc.in \
-                  pkg-config/dynamic/fish-utils.pc.in 
+                  pkg-config/dynamic/fish-utils.pc.in
 
 # - - -
 
@@ -22,17 +22,17 @@ $(pkgconfig): $(pkgconfig_ins)
 
 init: $(pkgconfig)
 
-test: 
+test:
 	make -C $(fishutil_dir) test
 	make -C $(fishutils_dir) test
 
-fishutil_obj: 
+fishutil_obj:
 	make -C $(fishutil_dir)
 
-fishutils_obj: 
+fishutils_obj:
 	make -C $(fishutils_dir)
 
-install: 
+install:
 	sh -c 'cd $(fishutil_dir); make install'
 	sh -c 'cd $(fishutils_dir); make install'
 

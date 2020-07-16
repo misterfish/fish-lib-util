@@ -18,7 +18,7 @@ all: libfish-util.so fish-util.o
 test:
 	# xxx
 
-fish-util.o: $(src) 
+fish-util.o: $(src)
 	$(cc) fish-util.c -c -o fish-util.o
 
 libfish-util.so: fish-util.o

@@ -26,17 +26,17 @@ fish-utils.o: $(src) $(objs)
 	@ # combine mulitiple .o into a total .o file.
 	ld -r $(objs) -o fish-utils.o
 
-test: 
+test:
 	# xxx
-	
-install: 
+
+install:
 	mkdir -p $(install_inc_dir)/fish-utils/fish-utils
 	cp fish-utils.h $(install_inc_dir)/fish-utils
 	cp -r fish-utils/*.h $(install_inc_dir)/fish-utils/fish-utils
 	cp libfish-utils.so $(install_lib_dir)
 	sudo ldconfig
 
-clean: 
+clean:
 	rm -rf tmp
 	rm -f *.o
 	rm -f fish-utils/*.o

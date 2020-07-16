@@ -4,7 +4,7 @@
  * Licence: GPL 2.0
  */
 
-#define _GNU_SOURCE 
+#define _GNU_SOURCE
 
 #include "../fish-utils.h"
 
@@ -27,7 +27,7 @@ vec *vec_new() {
 }
 
 bool vec_add(vec *v, void *ptr) {
-    if (v == NULL) 
+    if (v == NULL)
         pieprf;
 
     int i = ++(v->n);
@@ -58,7 +58,7 @@ bool vec_add(vec *v, void *ptr) {
 }
 
 int vec_size(vec *v) {
-    if (v == NULL) 
+    if (v == NULL)
         pieprneg1;
     return v->n;
 }
@@ -68,15 +68,15 @@ void *vec_get(vec *v, int n) {
         warn("Null pointer passed to vec_get");
         return NULL;
     }
-    if (n < 0) 
+    if (n < 0)
         pieprnull;
-    if (n > v->n - 1) 
+    if (n > v->n - 1)
         pieprnull;
     return v->_data[n];
 }
 
 void *vec_last(vec *v) {
-    if (v == NULL) 
+    if (v == NULL)
         pieprnull;;
     return v->_data[v->n - 1];
 }
@@ -86,11 +86,11 @@ bool vec_destroy_deep(vec *v) {
 }
 
 bool vec_destroy_f(vec *v, int flags) {
-    if (v == NULL) 
+    if (v == NULL)
         pieprf;
     if (flags && VEC_DESTROY_DEEP) {
         debug("deep destroy.", 1);
-        if (!vec_clear_f(v, VEC_CLEAR_DEEP)) 
+        if (!vec_clear_f(v, VEC_CLEAR_DEEP))
             pieprf;
     }
     free(v->_data);
@@ -105,7 +105,7 @@ bool vec_destroy(vec *v) {
 bool vec_clear_f(vec *v, int flags) {
     for (int i = 0; i < v->n; i++) {
         void *ptr = v->_data[i];
-        if (!ptr) 
+        if (!ptr)
             continue;
         if (flags && VEC_CLEAR_DEEP) {
             debug("freeing %p", ptr);
