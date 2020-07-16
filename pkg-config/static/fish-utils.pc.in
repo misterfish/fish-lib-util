@@ -9,7 +9,6 @@ Requires: libpcre >= 8.31
 Requires.private:
 Conflicts:
 Libs:
-# --static
-Libs.private: -lm ${maindir}/fish-utils.o
+# pkg-config --static --libs
+Libs.private: ${maindir}/fish-utils.o
 Cflags: -I${maindir}
-

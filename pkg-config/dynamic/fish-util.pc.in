@@ -9,7 +9,6 @@ Requires:
 Requires.private:
 Conflicts:
 Libs: -L${maindir} -lfish-util
-# --static
+# pkg-config --static --libs
 Libs.private:
 Cflags: -I${maindir}
-

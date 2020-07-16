@@ -10,5 +10,5 @@ Requires.private:
 Conflicts:
 Libs:
 # pkg-config --static --libs
-Libs.private: ${maindir}/fish-util.o
+Libs.private: -lm ${maindir}/fish-util.o
 Cflags: -I${maindir}
