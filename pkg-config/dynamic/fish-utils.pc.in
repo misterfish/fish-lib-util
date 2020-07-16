@@ -6,11 +6,10 @@ Version: 0.5.1
 URL: http://github.com/misterfish/fish-lib-util
 # Don't put things in Requires/Requires.private unless they also have .pc files.
 Requires: libpcre >= 8.31
-Requires.private: 
-Conflicts: 
+Requires.private:
+Conflicts:
 # -lm ?
-Libs: -L${maindir} -lfish-utils -lfish-util 
-# --static
-Libs.private: 
+Libs: -L${maindir} -lfish-utils -lfish-util
+# pkg-config --static --libs
+Libs.private:
 Cflags: -I${maindir}
-
