@@ -5,11 +5,9 @@
 *.swp
 
 test
+test2
 .init
 */.init
 */.obj
-
-vi
-.vido-files
 
 *.pc

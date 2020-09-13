@@ -4,8 +4,7 @@
  * Licence: GPL 2.0
  */
 
-#ifdef FISH_UTIL_H
-#else
+#ifndef FISH_UTIL_H
 #define FISH_UTIL_H
 
 #include <stdbool.h>
@@ -244,7 +243,7 @@
  * These names should not be used for any other variables.
  * XX
  */
-char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
+extern char *_s, *_t, *_u, *_v, *_w, *_x, *_y, *_z;
 
 char *f_dirname (const char *s);
 void *f_malloc (size_t s);
@@ -401,9 +400,4 @@ int f_get_color_reset_length ();
 
 void _complain (const char *file, unsigned int line, bool iserr, bool perr, const char *format, ...);
 
-/* guard */
 #endif
-/* guard */
-
-
-

@@ -13,10 +13,12 @@ all = $(lib) $(inc)
 
 src = fish-util.c fish-util.h
 
-all: libfish-util.so fish-util.o
+all: main test
+main: libfish-util.so fish-util.o
 
-test:
-	# xxx
+test: main
+	$(cc) fish-util.o test.c -lm -o test
+	$(cc) fish-util.o test2.c -lm -o test2
 
 fish-util.o: $(src)
 	$(cc) fish-util.c -c -o fish-util.o
@@ -34,6 +36,8 @@ install:
 clean:
 	rm -f *.o
 	rm -f *.so
+	rm -f test
+	rm -f test2
 
 mrproper: clean
 	rm -rf .obj
