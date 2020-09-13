@@ -1231,7 +1231,10 @@ double f_time_hires () {
 double f_time_hires_old () {
     struct timeb t;
     memset (&t, 0, sizeof (t));
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     ftime (&t);
+#pragma GCC diagnostic pop
 
     time_t time = t.time;
     unsigned short millitm = t.millitm;

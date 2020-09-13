@@ -24,7 +24,10 @@ int main (int argc, char** argv) {
         "v .. n"
     };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     double now_old = f_time_hires_old ();
+#pragma GCC diagnostic pop
     double now = f_time_hires ();
     info ("Time hires (ftime        ) is %f", now_old);
     info ("Time hires (clock_gettime) is %f", now);
