@@ -370,6 +370,7 @@ bool f_socket_unix_message (const char *filename, const char *msg);
 bool f_socket_unix_message_f (const char *filename, const char *msg, char *response, int buf_length);
 
 double f_time_hires ();
+double f_time_hires_old ();
 
 char *f_field (int width, const char *string, int max_len);
 

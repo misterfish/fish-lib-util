@@ -24,6 +24,11 @@ int main (int argc, char** argv) {
         "v .. n"
     };
 
+    double now_old = f_time_hires_old ();
+    double now = f_time_hires ();
+    info ("Time hires (ftime        ) is %f", now_old);
+    info ("Time hires (clock_gettime) is %f", now);
+
     return 0;
 
     /* for (int i = 0; i < 2; i++) {

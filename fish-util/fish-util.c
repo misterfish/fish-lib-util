@@ -49,6 +49,9 @@
 #include <sys/time.h>
 #include <math.h>
 
+// --- clock_gettime
+#include <time.h>
+
 #include <assert.h>
 
 // dirname.
@@ -1213,6 +1216,19 @@ bool f_socket_unix_message (const char *filename, const char *msg) {
 }
 
 double f_time_hires () {
+    struct timespec t;
+    clock_gettime (CLOCK_REALTIME, &t);
+
+    time_t secs = t.tv_sec;
+    long nano = t.tv_nsec;
+
+    double c = secs + nano * 1.0 / 1e9;
+    return c;
+}
+
+/* Uses deprecated function `ftime`.
+ */
+double f_time_hires_old () {
     struct timeb t;
     memset (&t, 0, sizeof (t));
     ftime (&t);
