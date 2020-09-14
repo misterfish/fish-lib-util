@@ -32,6 +32,9 @@ int main (int argc, char** argv) {
     info ("Time hires (ftime        ) is %f", now_old);
     info ("Time hires (clock_gettime) is %f", now);
 
+    int len4 = f_int_length (4567);
+    info ("Length of 4567 is %d", len4);
+
     return 0;
 
     /* for (int i = 0; i < 2; i++) {
